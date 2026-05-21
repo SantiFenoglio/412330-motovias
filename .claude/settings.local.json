@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(anthropic-skills:pdf)",
+      "Skill(anthropic-skills:pdf:*)",
+      "Bash(acli jira *)"
+    ]
+  }
+}

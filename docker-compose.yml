@@ -1,0 +1,50 @@
+services:
+
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: motovias-db
+    environment:
+      POSTGRES_DB: motovias
+      POSTGRES_USER: motovias
+      POSTGRES_PASSWORD: motovias
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U motovias -d motovias"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./motovias-backend
+      dockerfile: Dockerfile
+    container_name: motovias-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/motovias
+      SPRING_DATASOURCE_USERNAME: motovias
+      SPRING_DATASOURCE_PASSWORD: motovias
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./motovias-frontend
+      dockerfile: Dockerfile
+    container_name: motovias-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:

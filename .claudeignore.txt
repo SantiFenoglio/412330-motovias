@@ -1,0 +1,5 @@
+motovias-frontend/node_modules/
+motovias-backend/target/
+.git/
+.idea/
+.vscode/
