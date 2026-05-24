@@ -24,7 +24,7 @@ public class User {
     @Column(nullable = false)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String apellido;
 
     @Enumerated(EnumType.STRING)

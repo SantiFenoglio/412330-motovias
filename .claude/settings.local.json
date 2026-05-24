@@ -3,7 +3,12 @@
     "allow": [
       "Skill(anthropic-skills:pdf)",
       "Skill(anthropic-skills:pdf:*)",
-      "Bash(acli jira *)"
+      "Bash(acli jira *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\node_modules\\\\@primeuix\" | ForEach-Object { Write-Output $_.Name })",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\\\\core\\\\services\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\\\\core\\\\interceptors\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\\\\features\\\\auth\\\\login\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\\\\features\\\\auth\\\\register\")"
     ]
   }
 }

@@ -1,0 +1,77 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1 class="auth-title">Motovías</h1>
+      <p class="auth-subtitle">Ingresá a tu cuenta</p>
+    </div>
+
+    @if (errorMessage()) {
+      <p-message
+        severity="error"
+        [text]="errorMessage()!"
+        styleClass="auth-message"
+      />
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+      <div class="field">
+        <label for="email" class="field-label">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          formControlName="email"
+          placeholder="tu@email.com"
+          autocomplete="email"
+          class="field-input"
+          [class.field-input--invalid]="emailControl.invalid && emailControl.touched"
+          aria-describedby="email-error"
+        />
+        @if (emailControl.invalid && emailControl.touched) {
+          <small id="email-error" class="field-error" role="alert">
+            @if (emailControl.errors?.['required']) {
+              El email es requerido.
+            } @else if (emailControl.errors?.['email']) {
+              El formato del email no es válido.
+            }
+          </small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password" class="field-label">Contraseña</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          placeholder="••••••••"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="motovias-password"
+          autocomplete="current-password"
+          aria-describedby="password-error"
+        />
+        @if (passwordControl.invalid && passwordControl.touched) {
+          <small id="password-error" class="field-error" role="alert">
+            @if (passwordControl.errors?.['required']) {
+              La contraseña es requerida.
+            } @else if (passwordControl.errors?.['minlength']) {
+              Mínimo 6 caracteres.
+            }
+          </small>
+        }
+      </div>
+
+      <p-button
+        type="submit"
+        label="Ingresar"
+        [loading]="isLoading()"
+        styleClass="motovias-btn"
+      />
+    </form>
+
+    <p class="auth-footer">
+      ¿No tenés cuenta?
+      <a routerLink="/auth/register" class="auth-link">Registrate</a>
+    </p>
+  </div>
+</div>

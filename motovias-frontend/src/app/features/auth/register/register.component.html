@@ -1,0 +1,127 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1 class="auth-title">Motovías</h1>
+      <p class="auth-subtitle">Creá tu cuenta</p>
+    </div>
+
+    @if (errorMessage()) {
+      <p-message
+        severity="error"
+        [text]="errorMessage()!"
+        styleClass="auth-message"
+      />
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+      <div class="field">
+        <label for="nombre" class="field-label">Nombre</label>
+        <input
+          id="nombre"
+          type="text"
+          pInputText
+          formControlName="nombre"
+          placeholder="Tu nombre"
+          autocomplete="given-name"
+          class="field-input"
+          [class.field-input--invalid]="nombreControl.invalid && nombreControl.touched"
+          aria-describedby="nombre-error"
+        />
+        @if (nombreControl.invalid && nombreControl.touched) {
+          <small id="nombre-error" class="field-error" role="alert">
+            @if (nombreControl.errors?.['required']) {
+              El nombre es requerido.
+            } @else if (nombreControl.errors?.['minlength']) {
+              Mínimo 2 caracteres.
+            }
+          </small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email" class="field-label">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          formControlName="email"
+          placeholder="tu@email.com"
+          autocomplete="email"
+          class="field-input"
+          [class.field-input--invalid]="emailControl.invalid && emailControl.touched"
+          aria-describedby="email-error"
+        />
+        @if (emailControl.invalid && emailControl.touched) {
+          <small id="email-error" class="field-error" role="alert">
+            @if (emailControl.errors?.['required']) {
+              El email es requerido.
+            } @else if (emailControl.errors?.['email']) {
+              El formato del email no es válido.
+            }
+          </small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password" class="field-label">Contraseña</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          placeholder="Mínimo 6 caracteres"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="motovias-password"
+          autocomplete="new-password"
+          aria-describedby="password-error"
+        />
+        @if (passwordControl.invalid && passwordControl.touched) {
+          <small id="password-error" class="field-error" role="alert">
+            @if (passwordControl.errors?.['required']) {
+              La contraseña es requerida.
+            } @else if (passwordControl.errors?.['minlength']) {
+              Mínimo 6 caracteres.
+            }
+          </small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword" class="field-label">Confirmá la contraseña</label>
+        <p-password
+          inputId="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="Repetí tu contraseña"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="motovias-password"
+          autocomplete="new-password"
+          aria-describedby="confirm-password-error"
+        />
+        @if (
+          confirmPasswordControl.touched &&
+          (confirmPasswordControl.errors?.['required'] || form.errors?.['passwordsMismatch'])
+        ) {
+          <small id="confirm-password-error" class="field-error" role="alert">
+            @if (confirmPasswordControl.errors?.['required']) {
+              La confirmación es requerida.
+            } @else if (form.errors?.['passwordsMismatch']) {
+              Las contraseñas no coinciden.
+            }
+          </small>
+        }
+      </div>
+
+      <p-button
+        type="submit"
+        label="Registrarme"
+        [loading]="isLoading()"
+        styleClass="motovias-btn"
+      />
+    </form>
+
+    <p class="auth-footer">
+      ¿Ya tenés cuenta?
+      <a routerLink="/auth/login" class="auth-link">Iniciá sesión</a>
+    </p>
+  </div>
+</div>
