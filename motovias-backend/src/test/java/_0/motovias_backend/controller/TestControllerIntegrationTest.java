@@ -9,13 +9,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+// ObjectMapper se instancia como POJO: no depende de JacksonAutoConfiguration
+// (que puede no estar garantizada en @SpringBootTest sin @AutoConfigureMockMvc).
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,16 +58,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * </ol>
  */
 @SpringBootTest
-@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class TestControllerIntegrationTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private WebApplicationContext wac;
+
+    /**
+     * ObjectMapper instanciado como POJO puro — no via @Autowired.
+     *
+     * Por qué: @SpringBootTest sin @AutoConfigureMockMvc no garantiza que
+     * JacksonAutoConfiguration haya registrado el bean ObjectMapper antes de
+     * que Spring intente inyectar la clase de test. Instanciar directamente
+     * evita la dependencia del ciclo de vida del contexto y es el patrón
+     * recomendado para clases de utilidad sin estado Spring.
+     */
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** Token JWT válido obtenido en cada setup antes de cada test. */
     private String validToken;
@@ -72,6 +86,10 @@ class TestControllerIntegrationTest {
 
     @BeforeEach
     void obtenerTokenValido() throws Exception {
+        // Inicializamos MockMvc con seguridad para que los filtros se apliquen
+        mockMvc = MockMvcBuilders.webAppContextSetup(wac)
+                .apply(SecurityMockMvcConfigurers.springSecurity())
+                .build();
         // Intentar registrar al usuario (el 409 en repetición es esperado y se ignora)
         RegisterRequest register = new RegisterRequest();
         register.setEmail(TEST_EMAIL);
