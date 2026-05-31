@@ -1,0 +1,353 @@
+{
+  "info": {
+    "name": "Motovías – MOTOVIAS-18 Consultas Espaciales",
+    "description": "Valida los endpoints de puntos de interés y la consulta de proximidad ST_DWithin.\n\nRequisitos:\n- Docker Compose corriendo: `docker compose up -d`\n- Backend en http://localhost:8080\n- Base de datos PostgreSQL + PostGIS activa\n\nFlujo de ejecución recomendado:\n1. Ejecutar \"Registro usuario test\" (una sola vez)\n2. Ejecutar \"Login\" → el token se guarda en la variable {{jwt_token}}\n3. Ejecutar los requests de puntos de interés en orden\n4. Verificar las búsquedas de proximidad con distintos radios",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "motovias-18-spatial-collection"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "URL base del backend Spring Boot"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string",
+      "description": "Token JWT — se llena automáticamente al ejecutar Login"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "1. Registro usuario test",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api","auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Tester\",\n  \"apellido\": \"Espacial\",\n  \"email\": \"spatial@motovias.com\",\n  \"password\": \"Spatial2025!\",\n  \"role\": \"USER\",\n  \"tipoMotocicleta\": \"ADVENTURE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 201 en primera ejecución, 409 (email existente) en las siguientes",
+                  "pm.test('Registro exitoso o usuario ya existe', () => {",
+                  "  pm.expect([201, 409]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Login → obtener JWT",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"spatial@motovias.com\",\n  \"password\": \"Spatial2025!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login retorna 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Respuesta tiene token', () => pm.expect(json.token).to.be.a('string').and.not.empty);",
+                  "// Guardar token para los siguientes requests",
+                  "pm.collectionVariables.set('jwt_token', json.token);",
+                  "console.log('JWT guardado:', json.token.substring(0, 30) + '...');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Puntos de Interés",
+      "item": [
+        {
+          "name": "3. Crear punto – ACCIDENTE",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/puntos-interes", "host": ["{{base_url}}"], "path": ["api","puntos-interes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Accidente en Av. Colón\",\n  \"descripcion\": \"Colisión entre auto y moto, carril derecho cortado\",\n  \"latitud\": -31.4135,\n  \"longitud\": -64.1811,\n  \"categoria\": \"ACCIDENTE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Punto creado → 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Tiene id', () => pm.expect(json.id).to.be.a('number'));",
+                  "pm.test('Categoria correcta', () => pm.expect(json.categoria).to.eql('ACCIDENTE'));",
+                  "pm.test('Latitud correcta', () => pm.expect(json.latitud).to.be.closeTo(-31.4135, 0.0001));",
+                  "pm.test('Longitud correcta', () => pm.expect(json.longitud).to.be.closeTo(-64.1811, 0.0001));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Crear punto – OBRA (500 m al norte)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/puntos-interes", "host": ["{{base_url}}"], "path": ["api","puntos-interes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Obra en Bv. San Juan\",\n  \"descripcion\": \"Repavimentación, carriles reducidos\",\n  \"latitud\": -31.4090,\n  \"longitud\": -64.1811,\n  \"categoria\": \"OBRA\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Punto OBRA creado → 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Categoria OBRA', () => pm.expect(pm.response.json().categoria).to.eql('OBRA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Crear punto – TRAMPA_POLICIAL (3 km al sur)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/puntos-interes", "host": ["{{base_url}}"], "path": ["api","puntos-interes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Control policial Av. Fuerza Aérea\",\n  \"descripcion\": \"Radar fijo a 60 km/h\",\n  \"latitud\": -31.4405,\n  \"longitud\": -64.1811,\n  \"categoria\": \"TRAMPA_POLICIAL\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Punto TRAMPA_POLICIAL creado → 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Categoria correcta', () => pm.expect(pm.response.json().categoria).to.eql('TRAMPA_POLICIAL'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Crear punto – PELIGRO (100 m al este)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/puntos-interes", "host": ["{{base_url}}"], "path": ["api","puntos-interes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Bache peligroso\",\n  \"descripcion\": \"Bache profundo de 30 cm en carril derecho\",\n  \"latitud\": -31.4135,\n  \"longitud\": -64.1800,\n  \"categoria\": \"PELIGRO\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Punto PELIGRO creado → 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Listar todos los puntos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "{{base_url}}/api/puntos-interes", "host": ["{{base_url}}"], "path": ["api","puntos-interes"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Listado retorna 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Respuesta es un array', () => pm.expect(json).to.be.an('array'));",
+                  "pm.test('Al menos 4 puntos creados', () => pm.expect(json.length).to.be.at.least(4));",
+                  "pm.test('Cada punto tiene id, titulo, latitud, longitud, categoria', () => {",
+                  "  json.forEach(p => {",
+                  "    pm.expect(p).to.have.all.keys('id','titulo','latitud','longitud','categoria');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Consultas de Proximidad (ST_DWithin)",
+      "item": [
+        {
+          "name": "8. Cercanos radio 600 m – debe incluir ACCIDENTE y OBRA",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/puntos-interes/cercanos?lat=-31.4135&lon=-64.1811&radio=600",
+              "host": ["{{base_url}}"],
+              "path": ["api","puntos-interes","cercanos"],
+              "query": [
+                { "key": "lat",   "value": "-31.4135", "description": "Latitud WGS84 del centro de búsqueda" },
+                { "key": "lon",   "value": "-64.1811", "description": "Longitud WGS84 del centro de búsqueda" },
+                { "key": "radio", "value": "600",       "description": "Radio en metros (ST_DWithin usa geografía → metros reales)" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cercanos 600 m → 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Es un array', () => pm.expect(json).to.be.an('array'));",
+                  "const categorias = json.map(p => p.categoria);",
+                  "pm.test('Incluye ACCIDENTE (0 m del centro)', () => pm.expect(categorias).to.include('ACCIDENTE'));",
+                  "pm.test('Incluye OBRA (~500 m al norte)', () => pm.expect(categorias).to.include('OBRA'));",
+                  "pm.test('No incluye TRAMPA_POLICIAL (~3 km al sur)', () => pm.expect(categorias).to.not.include('TRAMPA_POLICIAL'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Cercanos radio 200 m – solo puntos muy cercanos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/puntos-interes/cercanos?lat=-31.4135&lon=-64.1811&radio=200",
+              "host": ["{{base_url}}"],
+              "path": ["api","puntos-interes","cercanos"],
+              "query": [
+                { "key": "lat",   "value": "-31.4135" },
+                { "key": "lon",   "value": "-64.1811" },
+                { "key": "radio", "value": "200" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cercanos 200 m → 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Es un array', () => pm.expect(json).to.be.an('array'));",
+                  "const categorias = json.map(p => p.categoria);",
+                  "pm.test('Incluye ACCIDENTE (0 m)', () => pm.expect(categorias).to.include('ACCIDENTE'));",
+                  "pm.test('Incluye PELIGRO (~100 m al este)', () => pm.expect(categorias).to.include('PELIGRO'));",
+                  "pm.test('No incluye OBRA (~500 m)', () => pm.expect(categorias).to.not.include('OBRA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Cercanos radio 5000 m – todos los puntos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/puntos-interes/cercanos?lat=-31.4135&lon=-64.1811&radio=5000",
+              "host": ["{{base_url}}"],
+              "path": ["api","puntos-interes","cercanos"],
+              "query": [
+                { "key": "lat",   "value": "-31.4135" },
+                { "key": "lon",   "value": "-64.1811" },
+                { "key": "radio", "value": "5000" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cercanos 5000 m → 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Contiene todos los puntos creados (≥4)', () => pm.expect(json.length).to.be.at.least(4));",
+                  "const categorias = json.map(p => p.categoria);",
+                  "['ACCIDENTE','OBRA','TRAMPA_POLICIAL','PELIGRO'].forEach(cat => {",
+                  "  pm.test('Incluye ' + cat, () => pm.expect(categorias).to.include(cat));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. Cercanos sin token → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/puntos-interes/cercanos?lat=-31.4135&lon=-64.1811&radio=1000",
+              "host": ["{{base_url}}"],
+              "path": ["api","puntos-interes","cercanos"],
+              "query": [
+                { "key": "lat",   "value": "-31.4135" },
+                { "key": "lon",   "value": "-64.1811" },
+                { "key": "radio", "value": "1000" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Sin token → 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Respuesta tiene mensaje de error', () => {",
+                  "  pm.expect(pm.response.json().message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

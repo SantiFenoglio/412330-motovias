@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS puntos_interes (
     titulo      VARCHAR(255) NOT NULL,
     descripcion VARCHAR(500),
     ubicacion   GEOMETRY     NOT NULL,
+    categoria   VARCHAR(50)  NOT NULL,
     usuario_id  BIGINT,
     CONSTRAINT fk_punto_usuario FOREIGN KEY (usuario_id) REFERENCES users(id)
 );

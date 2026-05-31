@@ -43,6 +43,10 @@ public class PuntoInteres {
     @Column(nullable = false, columnDefinition = "geometry(Point,4326)")
     private Point ubicacion;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Categoria categoria;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     private User usuario;

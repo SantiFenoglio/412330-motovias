@@ -133,3 +133,39 @@ body {
   font-size: 0.875rem;
   width: 100%;
 }
+
+/* ─── Marcadores Leaflet (divIcon) ──────────────────────────────
+   Leaflet renderiza los marcadores fuera del shadow DOM de Angular;
+   estos estilos deben vivir en el scope global. */
+.moto-pin {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  border: 2.5px solid #ffffff;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.moto-pin:hover {
+  transform: scale(1.15);
+}
+
+/* ─── Popups Leaflet ────────────────────────────────────────── */
+.leaflet-popup-content .popup-titulo {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.leaflet-popup-content .popup-cat {
+  font-size: 0.8rem;
+}
+
+.leaflet-popup-content .popup-desc {
+  font-size: 0.8rem;
+  color: #475569;
+}
