@@ -1,6 +1,13 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  {
+    path: 'map',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/map/map.component').then((m) => m.MapComponent),
+  },
   {
     path: 'auth',
     children: [
@@ -21,6 +28,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
-  { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
+  // Raíz → /map; authGuard redirige a login si no hay sesión.
+  { path: '', redirectTo: '/map', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' },
 ];

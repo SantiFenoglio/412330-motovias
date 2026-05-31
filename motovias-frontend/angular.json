@@ -27,7 +27,8 @@
             "styles": [
               "node_modules/primeicons/primeicons.css",
               "src/styles.css"
-            ]
+            ],
+            "allowedCommonJsDependencies": ["leaflet"]
           },
           "configurations": {
             "production": {

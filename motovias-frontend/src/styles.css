@@ -1,5 +1,6 @@
 /* Global styles */
 @import 'primeicons/primeicons.css';
+@import 'leaflet/dist/leaflet.css';
 
 /* ─── Reset / Base ─────────────────────────────────────────── */
 *,

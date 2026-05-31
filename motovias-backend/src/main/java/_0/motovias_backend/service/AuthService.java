@@ -13,8 +13,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,14 +27,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final UserDetailsService userDetailsService;
 
     public LoginResponse login(LoginRequest request) {
-        // Capturamos la excepción de seguridad ANTES de que llegue al ExceptionTranslationFilter.
+        // Capturamos la excepción ANTES de que llegue al ExceptionTranslationFilter.
         // Si BadCredentialsException escapa al filtro, Spring Security llama sendError(403),
         // el error dispatch no lleva CORS headers y el browser bloquea la respuesta.
+        Authentication authentication;
         try {
-            authenticationManager.authenticate(
+            authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (DisabledException e) {
@@ -43,10 +43,18 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+        // DaoAuthenticationProvider ya cargó el UserDetails al autenticar.
+        // Lo extraemos del objeto Authentication para evitar una segunda consulta a la BD.
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String token = jwtService.generateToken(userDetails);
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        return new LoginResponse(token, user.getEmail(), user.getRole().name());
+
+        // authorities tiene el prefijo "ROLE_" que agrega Spring Security en .roles()
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .orElse(Role.USER.name());
+
+        return new LoginResponse(token, userDetails.getUsername(), role);
     }
 
     public LoginResponse register(RegisterRequest request) {
@@ -59,7 +67,6 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .nombre(request.getNombre())
-                // apellido es opcional; si la BD ya existe con NOT NULL, el "" evita el constraint
                 .apellido(request.getApellido() != null ? request.getApellido() : "")
                 .role(request.getRole() != null ? request.getRole() : Role.USER)
                 .activo(true)
@@ -68,7 +75,13 @@ public class AuthService {
 
         userRepository.save(user);
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        // Construimos UserDetails directamente del usuario guardado; sin nueva consulta.
+        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                .username(user.getEmail())
+                .password(user.getPassword())
+                .roles(user.getRole().name())
+                .disabled(!user.isActivo())
+                .build();
         String token = jwtService.generateToken(userDetails);
         return new LoginResponse(token, user.getEmail(), user.getRole().name());
     }
