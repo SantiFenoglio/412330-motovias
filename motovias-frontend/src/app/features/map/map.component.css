@@ -1,0 +1,60 @@
+:host {
+  display: block;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.map-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  background: #1e293b;
+  color: #f8fafc;
+  flex-shrink: 0;
+  height: 3.25rem;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.03em;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  min-height: 2.75rem;
+  background: transparent;
+  border: 1px solid rgba(248, 250, 252, 0.3);
+  border-radius: 6px;
+  color: #f8fafc;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(248, 250, 252, 0.1);
+}
+
+.logout-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
