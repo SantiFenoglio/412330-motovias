@@ -48,7 +48,7 @@ export class LoginComponent {
     this.authService.login({ email: email!, password: password! }).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/']);
+        this.router.navigate(['/map']);
       },
       error: (err) => {
         this.isLoading.set(false);

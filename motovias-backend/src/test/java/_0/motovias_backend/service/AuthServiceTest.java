@@ -18,8 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -49,11 +49,10 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     // ── Dependencias mockeadas ────────────────────────────────────
-    @Mock private UserRepository     userRepository;
-    @Mock private PasswordEncoder    passwordEncoder;
-    @Mock private JwtService         jwtService;
+    @Mock private UserRepository        userRepository;
+    @Mock private PasswordEncoder       passwordEncoder;
+    @Mock private JwtService            jwtService;
     @Mock private AuthenticationManager authenticationManager;
-    @Mock private UserDetailsService userDetailsService;
 
     @InjectMocks
     private AuthService authService;
@@ -98,8 +97,8 @@ class AuthServiceTest {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$hashed");
         when(userRepository.save(any(User.class))).thenReturn(mockUser);
-        when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(mockUserDetails);
-        when(jwtService.generateToken(mockUserDetails)).thenReturn(TOKEN);
+        // register() construye UserDetails desde el User guardado (sin llamar a userDetailsService)
+        when(jwtService.generateToken(any(UserDetails.class))).thenReturn(TOKEN);
 
         // Act
         LoginResponse response = authService.register(request);
@@ -111,7 +110,7 @@ class AuthServiceTest {
 
         verify(userRepository).save(any(User.class));
         verify(passwordEncoder).encode(PASSWORD);
-        verify(jwtService).generateToken(mockUserDetails);
+        verify(jwtService).generateToken(any(UserDetails.class));
     }
 
     @Test
@@ -142,8 +141,12 @@ class AuthServiceTest {
         // Arrange
         LoginRequest request = buildLoginRequest(EMAIL, PASSWORD);
 
-        when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(mockUserDetails);
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(mockUser));
+        // authenticationManager retorna un Authentication cuyo principal es el UserDetails.
+        // Así evitamos la segunda consulta a la BD que había antes.
+        Authentication mockAuth = mock(Authentication.class);
+        when(mockAuth.getPrincipal()).thenReturn(mockUserDetails);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(mockAuth);
         when(jwtService.generateToken(mockUserDetails)).thenReturn(TOKEN);
 
         // Act

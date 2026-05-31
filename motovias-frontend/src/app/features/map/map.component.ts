@@ -14,19 +14,22 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-map',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapComponent implements OnDestroy {
-  private readonly mapRef = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
+  readonly mapRef = viewChild.required<ElementRef>('mapContainer');
+
   private readonly zone = inject(NgZone);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  private map?: L.Map;
+  private map: L.Map | undefined;
 
   constructor() {
+    // afterNextRender garantiza que el DOM esté listo antes de inicializar Leaflet.
+    // runOutsideAngular evita que el event loop de Leaflet dispare detección de cambios.
     afterNextRender(() => {
       this.zone.runOutsideAngular(() => this.initMap());
     });
@@ -44,7 +47,7 @@ export class MapComponent implements OnDestroy {
 
   private initMap(): void {
     this.map = L.map(this.mapRef().nativeElement, {
-      center: [-31.4135, -64.1811],
+      center: [-31.4135, -64.1811], // Córdoba, Argentina
       zoom: 13,
       zoomControl: true,
     });
