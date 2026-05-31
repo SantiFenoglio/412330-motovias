@@ -13,32 +13,8 @@
   </header>
 
   <div class="map-body">
-    <!-- Panel de filtros -->
-    <aside class="filter-panel" aria-label="Filtros de categoría">
-      <fieldset class="filter-fieldset">
-        <legend class="filter-legend">Categorías</legend>
-
-        @for (entry of todasLasCategorias; track entry[0]) {
-          <label class="filter-item">
-            <input
-              type="checkbox"
-              class="filter-checkbox"
-              [checked]="esCategoriaActiva(entry[0])"
-              (change)="toggleCategoria(entry[0])"
-              [attr.aria-label]="'Mostrar ' + entry[1].label"
-            />
-            <span
-              class="filter-badge"
-              [style.background]="entry[1].color"
-              aria-hidden="true"
-            >
-              {{ entry[1].emoji }}
-            </span>
-            <span class="filter-label">{{ entry[1].label }}</span>
-          </label>
-        }
-      </fieldset>
-    </aside>
+    <!-- Panel de filtros flotante sobre el mapa -->
+    <app-filter-panel />
 
     <!-- Contenedor del mapa Leaflet -->
     <div

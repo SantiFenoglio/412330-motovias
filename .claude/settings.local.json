@@ -9,7 +9,10 @@
       "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\\\\core\\\\interceptors\")",
       "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\\\\features\\\\auth\\\\login\")",
       "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\\\\features\\\\auth\\\\register\")",
-      "Bash(dir /s /b)"
+      "Bash(dir /s /b)",
+      "Bash(npx ng *)",
+      "Bash(git add *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

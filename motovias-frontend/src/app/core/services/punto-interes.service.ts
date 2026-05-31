@@ -1,7 +1,13 @@
-import { inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Categoria, PuntoInteres, PuntoInteresRequest } from '../models/punto-interes.model';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, Observable, of } from 'rxjs';
+import {
+  Categoria,
+  PuntoInteres,
+  PuntoInteresRequest,
+  TODAS_LAS_CATEGORIAS,
+} from '../models/punto-interes.model';
 
 const BASE_URL = 'http://localhost:8080/api/puntos-interes';
 
@@ -9,8 +15,28 @@ const BASE_URL = 'http://localhost:8080/api/puntos-interes';
 export class PuntoInteresService {
   private readonly http = inject(HttpClient);
 
-  listarTodos(): Observable<PuntoInteres[]> {
-    return this.http.get<PuntoInteres[]>(BASE_URL);
+  private readonly _todos = toSignal(
+    this.http.get<PuntoInteres[]>(BASE_URL).pipe(catchError(() => of([]))),
+    { initialValue: [] as PuntoInteres[] },
+  );
+
+  private readonly _categoriasActivas = signal<Categoria[]>([...TODAS_LAS_CATEGORIAS]);
+
+  readonly categoriasActivas = this._categoriasActivas.asReadonly();
+
+  readonly puntosFiltrados = computed(() => {
+    const activas = this._categoriasActivas();
+    return this._todos().filter((p) => activas.includes(p.categoria));
+  });
+
+  toggleCategoria(cat: Categoria): void {
+    this._categoriasActivas.update((current) =>
+      current.includes(cat) ? current.filter((c) => c !== cat) : [...current, cat],
+    );
+  }
+
+  esCategoriaActiva(cat: Categoria): boolean {
+    return this._categoriasActivas().includes(cat);
   }
 
   buscarCercanos(lat: number, lon: number, radio: number): Observable<PuntoInteres[]> {

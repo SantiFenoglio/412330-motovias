@@ -1,0 +1,67 @@
+<div class="fp-host" [class.fp-host--open]="isPanelOpen()">
+  <!-- Toggle FAB -->
+  <button
+    class="fp-toggle"
+    type="button"
+    [attr.aria-expanded]="isPanelOpen()"
+    aria-controls="filter-panel-body"
+    aria-label="Filtrar categorías de marcadores"
+    (click)="togglePanel()"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      width="22"
+      height="22"
+    >
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="8" y1="12" x2="20" y2="12" />
+      <line x1="12" y1="18" x2="20" y2="18" />
+      <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+    <span class="fp-badge" aria-label="{{ activasCount }} de {{ totalCount }} categorías activas">
+      {{ activasCount }}/{{ totalCount }}
+    </span>
+  </button>
+
+  <!-- Panel body -->
+  @if (isPanelOpen()) {
+    <div
+      id="filter-panel-body"
+      class="fp-panel"
+      role="group"
+      aria-label="Categorías de puntos de interés"
+    >
+      <p class="fp-title">Categorías</p>
+
+      <fieldset class="fp-fieldset">
+        <legend class="fp-legend">Mostrar en el mapa</legend>
+
+        @for (entry of todasLasCategorias; track entry[0]) {
+          <label class="fp-item" [attr.for]="'filter-' + entry[0]">
+            <p-checkbox
+              [inputId]="'filter-' + entry[0]"
+              [binary]="true"
+              [ngModel]="esCategoriaActiva(entry[0])"
+              (onChange)="toggleCategoria(entry[0])"
+              [attr.aria-label]="'Mostrar ' + entry[1].label"
+            />
+            <span
+              class="fp-dot"
+              [style.background]="entry[1].color"
+              aria-hidden="true"
+            ></span>
+            <span class="fp-cat-label">{{ entry[1].label }}</span>
+          </label>
+        }
+      </fieldset>
+    </div>
+  }
+</div>

@@ -1,0 +1,172 @@
+:host {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Toggle button ─────────────────────────────────────────── */
+
+.fp-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.875rem;
+  height: 3rem;
+  min-width: 3rem;
+  background: #1e293b;
+  color: #f8fafc;
+  border: none;
+  border-radius: 2rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+  touch-action: manipulation;
+}
+
+.fp-toggle:hover {
+  background: #334155;
+}
+
+.fp-toggle:active {
+  transform: scale(0.97);
+}
+
+.fp-toggle:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 3px;
+}
+
+.fp-badge {
+  background: #3b82f6;
+  border-radius: 1rem;
+  padding: 0.125rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+/* ── Panel ─────────────────────────────────────────────────── */
+
+.fp-panel {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  padding: 0.875rem 1rem 1rem;
+  min-width: 15rem;
+  animation: fp-slide-in 0.18s ease;
+}
+
+@keyframes fp-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fp-title {
+  margin: 0 0 0.625rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #64748b;
+}
+
+.fp-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fp-legend {
+  /* visually hidden – still read by screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Category row ──────────────────────────────────────────── */
+
+.fp-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.375rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  /* Touch-friendly minimum height for glove use */
+  min-height: 2.75rem;
+  user-select: none;
+}
+
+.fp-item:hover {
+  background: #f1f5f9;
+}
+
+.fp-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fp-cat-label {
+  font-size: 0.9rem;
+  color: #1e293b;
+  line-height: 1.2;
+  flex: 1;
+}
+
+/* ── PrimeNG Checkbox overrides ────────────────────────────── */
+
+.fp-item :deep(.p-checkbox) {
+  flex-shrink: 0;
+}
+
+.fp-item :deep(.p-checkbox-box) {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 4px;
+}
+
+/* ── Responsive – mobile full-width panel ──────────────────── */
+
+@media (max-width: 480px) {
+  :host {
+    top: auto;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+  }
+
+  .fp-panel {
+    width: 100%;
+  }
+
+  .fp-item {
+    min-height: 3.25rem;
+    font-size: 1rem;
+  }
+
+  .fp-toggle {
+    align-self: flex-start;
+  }
+}
