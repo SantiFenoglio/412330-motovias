@@ -1,0 +1,233 @@
+/* ── Backdrop ─────────────────────────────────────────────────────────────── */
+
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (min-width: 768px) {
+  .popup-backdrop {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+
+.popup-card {
+  background: #fff;
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 520px;
+  max-height: 85dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  animation: slideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@media (min-width: 768px) {
+  .popup-card {
+    border-radius: 1rem;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+    animation: scaleIn 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+}
+
+/* ── Handle bar (solo mobile) ─────────────────────────────────────────────── */
+
+.popup-card::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  margin: 0.75rem auto 0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .popup-card::before {
+    display: none;
+  }
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.popup-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem 0.875rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.popup-titulo {
+  flex: 1;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #1e293b;
+  margin: 0;
+}
+
+.popup-close-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.popup-close-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.popup-close-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+
+.popup-body {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  flex: 1;
+}
+
+.popup-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+
+.badge-cat {
+  border-color: currentColor;
+}
+
+.popup-descripcion {
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Meta ─────────────────────────────────────────────────────────────────── */
+
+.popup-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  color: #64748b;
+}
+
+.meta-icon {
+  display: flex;
+  align-items: center;
+  width: 1rem;
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.meta-row dd {
+  margin: 0;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.popup-footer {
+  padding: 0.75rem 1.25rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .popup-footer {
+    padding-bottom: 1.25rem;
+  }
+}
+
+.btn-detalle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  background: #1e293b;
+  color: #fff;
+  border: none;
+  border-radius: 0.625rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  font-family: inherit;
+  min-height: 2.75rem;
+}
+
+.btn-detalle:hover {
+  background: #334155;
+}
+
+.btn-detalle:active {
+  transform: scale(0.98);
+}
+
+.btn-detalle:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

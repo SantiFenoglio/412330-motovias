@@ -4,9 +4,17 @@ export type Categoria =
   | 'ALERTA_SOS'
   | 'PUNTO_INTERES';
 
+export type EstadoPunto = 'ACTIVO' | 'RESUELTO' | 'DUDOSO';
+
 export interface CategoriaConfig {
   label: string;
   color: string;
+}
+
+export interface EstadoConfig {
+  label: string;
+  color: string;
+  bg: string;
 }
 
 export const TODAS_LAS_CATEGORIAS: Categoria[] = [
@@ -23,6 +31,12 @@ export const CATEGORY_CONFIG: Record<Categoria, CategoriaConfig> = {
   PUNTO_INTERES: { label: 'Punto de interés / Parador',  color: '#ea580c' },
 };
 
+export const ESTADO_CONFIG: Record<EstadoPunto, EstadoConfig> = {
+  ACTIVO:   { label: 'Activo',   color: '#15803d', bg: '#dcfce7' },
+  RESUELTO: { label: 'Resuelto', color: '#1d4ed8', bg: '#dbeafe' },
+  DUDOSO:   { label: 'Dudoso',   color: '#b45309', bg: '#fef3c7' },
+};
+
 export interface PuntoInteres {
   id: number;
   titulo: string;
@@ -30,7 +44,10 @@ export interface PuntoInteres {
   latitud: number;
   longitud: number;
   categoria: Categoria;
+  estado?: EstadoPunto;
+  fechaCreacion?: string;
   emailUsuario?: string;
+  nombreUsuario?: string;
 }
 
 export interface PuntoInteresRequest {

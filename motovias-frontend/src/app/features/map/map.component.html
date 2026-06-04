@@ -24,4 +24,10 @@
       aria-label="Mapa cartográfico de rutas"
     ></div>
   </div>
+
+  <!-- Popup de detalle del marcador seleccionado -->
+  <app-reporte-popup
+    [punto]="selectedPunto()"
+    (closed)="selectedPunto.set(null)"
+  />
 </main>

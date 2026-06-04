@@ -110,7 +110,7 @@ class PuntoInteresControllerIntegrationTest {
     void crear_sinToken_retorna401() throws Exception {
         mockMvc.perform(post("/api/puntos-interes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(bodyPunto("Accidente en Colón", "ACCIDENTE")))
+                        .content(bodyPunto("Taller en Colón", "TALLER")))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -120,11 +120,11 @@ class PuntoInteresControllerIntegrationTest {
         mockMvc.perform(post("/api/puntos-interes")
                         .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(bodyPunto("Bache en Av. Colón", "PELIGRO")))
+                        .content(bodyPunto("Gomería Av. Colón", "GOMERIA")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.titulo").value("Bache en Av. Colón"))
-                .andExpect(jsonPath("$.categoria").value("PELIGRO"))
+                .andExpect(jsonPath("$.titulo").value("Gomería Av. Colón"))
+                .andExpect(jsonPath("$.categoria").value("GOMERIA"))
                 .andExpect(jsonPath("$.latitud").value(-31.4135))
                 .andExpect(jsonPath("$.longitud").value(-64.1811));
     }
@@ -135,13 +135,13 @@ class PuntoInteresControllerIntegrationTest {
         mockMvc.perform(post("/api/puntos-interes")
                         .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(bodyPunto("Obra en Vélez Sarsfield", "OBRA")))
+                        .content(bodyPunto("Parador Vélez Sarsfield", "PUNTO_INTERES")))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(get("/api/puntos-interes")
                         .header("Authorization", "Bearer " + validToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.titulo == 'Obra en Vélez Sarsfield')]").exists());
+                .andExpect(jsonPath("$[?(@.titulo == 'Parador Vélez Sarsfield')]").exists());
     }
 
     @Test

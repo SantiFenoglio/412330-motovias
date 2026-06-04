@@ -49,7 +49,7 @@ class PuntoInteresServiceTest {
     @Test
     @DisplayName("listarTodos mapea coordenadas: getY()=lat, getX()=lon")
     void listarTodos_mapeaCoordenadas_correctamente() {
-        PuntoInteres entidad = puntoConCoordenadas(1L, LON, LAT, Categoria.ACCIDENTE);
+        PuntoInteres entidad = puntoConCoordenadas(1L, LON, LAT, Categoria.TALLER);
         when(repository.findAll()).thenReturn(List.of(entidad));
 
         List<PuntoInteresResponseDTO> resultado = service.listarTodos();
@@ -58,14 +58,14 @@ class PuntoInteresServiceTest {
         PuntoInteresResponseDTO dto = resultado.get(0);
         assertThat(dto.getLatitud()).isCloseTo(LAT, Offset.offset(0.0001));
         assertThat(dto.getLongitud()).isCloseTo(LON, Offset.offset(0.0001));
-        assertThat(dto.getCategoria()).isEqualTo(Categoria.ACCIDENTE);
+        assertThat(dto.getCategoria()).isEqualTo(Categoria.TALLER);
         assertThat(dto.getEmailUsuario()).isNull();
     }
 
     @Test
     @DisplayName("listarTodos incluye email del usuario cuando existe")
     void listarTodos_conUsuario_incluyeEmail() {
-        PuntoInteres entidad = puntoConCoordenadas(2L, LON, LAT, Categoria.OBRA);
+        PuntoInteres entidad = puntoConCoordenadas(2L, LON, LAT, Categoria.GOMERIA);
         User user = new User();
         user.setEmail("test@motovias.com");
         entidad.setUsuario(user);
@@ -91,35 +91,35 @@ class PuntoInteresServiceTest {
     @Test
     @DisplayName("buscarCercanos mapea la respuesta del repositorio a DTOs")
     void buscarCercanos_mapeaRespuestaADTOs() {
-        PuntoInteres entidad = puntoConCoordenadas(3L, LON, LAT, Categoria.TRAMPA_POLICIAL);
+        PuntoInteres entidad = puntoConCoordenadas(3L, LON, LAT, Categoria.ALERTA_SOS);
         when(repository.findCercanos(LAT, LON, 1000.0)).thenReturn(List.of(entidad));
 
         List<PuntoInteresResponseDTO> resultado = service.buscarCercanos(LAT, LON, 1000.0);
 
         assertThat(resultado).hasSize(1);
-        assertThat(resultado.get(0).getCategoria()).isEqualTo(Categoria.TRAMPA_POLICIAL);
+        assertThat(resultado.get(0).getCategoria()).isEqualTo(Categoria.ALERTA_SOS);
     }
 
     @Test
     @DisplayName("crear persiste el punto y retorna el DTO con id asignado")
     void crear_persisteYRetornaDTO() {
         PuntoInteresRequestDTO dto = new PuntoInteresRequestDTO();
-        dto.setTitulo("Bache peligroso");
-        dto.setDescripcion("Gran bache en cruce");
+        dto.setTitulo("Taller cercano");
+        dto.setDescripcion("Taller especializado en motos");
         dto.setLatitud(LAT);
         dto.setLongitud(LON);
-        dto.setCategoria(Categoria.PELIGRO);
+        dto.setCategoria(Categoria.TALLER);
 
-        PuntoInteres guardado = puntoConCoordenadas(10L, LON, LAT, Categoria.PELIGRO);
-        guardado.setTitulo("Bache peligroso");
-        guardado.setDescripcion("Gran bache en cruce");
+        PuntoInteres guardado = puntoConCoordenadas(10L, LON, LAT, Categoria.TALLER);
+        guardado.setTitulo("Taller cercano");
+        guardado.setDescripcion("Taller especializado en motos");
         when(repository.save(any(PuntoInteres.class))).thenReturn(guardado);
 
         PuntoInteresResponseDTO resultado = service.crear(dto, null);
 
         assertThat(resultado.getId()).isEqualTo(10L);
-        assertThat(resultado.getTitulo()).isEqualTo("Bache peligroso");
-        assertThat(resultado.getCategoria()).isEqualTo(Categoria.PELIGRO);
+        assertThat(resultado.getTitulo()).isEqualTo("Taller cercano");
+        assertThat(resultado.getCategoria()).isEqualTo(Categoria.TALLER);
         assertThat(resultado.getLatitud()).isCloseTo(LAT, Offset.offset(0.0001));
         verify(repository).save(any(PuntoInteres.class));
     }
@@ -131,7 +131,7 @@ class PuntoInteresServiceTest {
         dto.setTitulo("Test");
         dto.setLatitud(LAT);
         dto.setLongitud(LON);
-        dto.setCategoria(Categoria.SEMAFORO_ROTO);
+        dto.setCategoria(Categoria.PUNTO_INTERES);
 
         when(repository.save(any(PuntoInteres.class))).thenAnswer(inv -> {
             PuntoInteres p = inv.getArgument(0);

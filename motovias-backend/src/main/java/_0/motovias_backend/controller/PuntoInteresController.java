@@ -27,6 +27,11 @@ public class PuntoInteresController {
         return ResponseEntity.ok(service.listarTodos());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PuntoInteresResponseDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.findById(id));
+    }
+
     /**
      * Busca puntos de interés dentro del radio dado en metros.
      *

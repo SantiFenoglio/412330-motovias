@@ -39,6 +39,10 @@ export class PuntoInteresService {
     return this._categoriasActivas().includes(cat);
   }
 
+  getById(id: number): Observable<PuntoInteres> {
+    return this.http.get<PuntoInteres>(`${BASE_URL}/${id}`);
+  }
+
   buscarCercanos(lat: number, lon: number, radio: number): Observable<PuntoInteres[]> {
     return this.http.get<PuntoInteres[]>(`${BASE_URL}/cercanos`, {
       params: { lat, lon, radio },

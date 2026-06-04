@@ -1,0 +1,82 @@
+<main class="detail-page">
+  <header class="detail-header">
+    <a routerLink="/map" class="back-link" aria-label="Volver al mapa">
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      <span>Volver al mapa</span>
+    </a>
+    <span class="brand">Motovías</span>
+  </header>
+
+  <div class="detail-content">
+    @if (cargando()) {
+      <div class="status-state" role="status" aria-live="polite">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <span>Cargando reporte...</span>
+      </div>
+    } @else if (error()) {
+      <div class="status-state status-error" role="alert">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <p>No se pudo cargar el reporte.</p>
+        <a routerLink="/map" class="btn-volver">Volver al mapa</a>
+      </div>
+    } @else if (punto()) {
+      <p-card styleClass="reporte-card">
+        <div class="card-badges">
+          @if (CATEGORY_CONFIG[punto()!.categoria]) {
+            <span
+              class="badge badge-cat"
+              [style.background]="CATEGORY_CONFIG[punto()!.categoria].color + '22'"
+              [style.color]="CATEGORY_CONFIG[punto()!.categoria].color"
+              [style.border-color]="CATEGORY_CONFIG[punto()!.categoria].color + '55'"
+            >
+              {{ CATEGORY_CONFIG[punto()!.categoria].label }}
+            </span>
+          }
+          @if (punto()!.estado && ESTADO_CONFIG[punto()!.estado!]) {
+            <span
+              class="badge badge-estado"
+              [style.background]="ESTADO_CONFIG[punto()!.estado!].bg"
+              [style.color]="ESTADO_CONFIG[punto()!.estado!].color"
+            >
+              {{ ESTADO_CONFIG[punto()!.estado!].label }}
+            </span>
+          }
+        </div>
+
+        <h1 class="reporte-titulo">{{ punto()!.titulo }}</h1>
+
+        @if (punto()!.descripcion) {
+          <p class="reporte-descripcion">{{ punto()!.descripcion }}</p>
+        }
+
+        <dl class="reporte-meta">
+          @if (punto()!.nombreUsuario ?? punto()!.emailUsuario) {
+            <div class="meta-row">
+              <dt>
+                <i class="pi pi-user" aria-hidden="true"></i>
+                <span>Autor</span>
+              </dt>
+              <dd>{{ punto()!.nombreUsuario ?? punto()!.emailUsuario }}</dd>
+            </div>
+          }
+          @if (punto()!.fechaCreacion) {
+            <div class="meta-row">
+              <dt>
+                <i class="pi pi-calendar" aria-hidden="true"></i>
+                <span>Fecha</span>
+              </dt>
+              <dd>{{ punto()!.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+          }
+          <div class="meta-row">
+            <dt>
+              <i class="pi pi-map-marker" aria-hidden="true"></i>
+              <span>Categoría</span>
+            </dt>
+            <dd>{{ CATEGORY_CONFIG[punto()!.categoria]?.label ?? punto()!.categoria }}</dd>
+          </div>
+        </dl>
+      </p-card>
+    }
+  </div>
+</main>

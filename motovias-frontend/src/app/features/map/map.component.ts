@@ -7,6 +7,7 @@ import {
   inject,
   NgZone,
   OnDestroy,
+  signal,
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -15,6 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PuntoInteresService } from '../../core/services/punto-interes.service';
 import { Categoria, PuntoInteres } from '../../core/models/punto-interes.model';
 import { FilterPanelComponent } from './filter-panel/filter-panel.component';
+import { ReportePopupComponent } from './reporte-popup/reporte-popup.component';
 
 // SVG inline strings for Leaflet divIcon – kept here because they are
 // only needed for marker rendering, not for the filter UI.
@@ -66,7 +68,7 @@ const CATEGORY_LABEL: Record<Categoria, string> = {
 @Component({
   selector: 'app-map',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FilterPanelComponent],
+  imports: [FilterPanelComponent, ReportePopupComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
 })
@@ -81,6 +83,8 @@ export class MapComponent implements OnDestroy {
   private map: L.Map | undefined;
   private readonly leafletMarkers = new Map<number, L.Marker>();
 
+  readonly selectedPunto = signal<PuntoInteres | null>(null);
+
   constructor() {
     effect(() => {
       const filtrados = this.puntoInteresService.puntosFiltrados();
@@ -90,7 +94,11 @@ export class MapComponent implements OnDestroy {
     });
 
     afterNextRender(() => {
-      this.zone.runOutsideAngular(() => this.initMap());
+      this.zone.runOutsideAngular(() => {
+        this.initMap();
+        // Sincronizar inmediatamente con datos ya cacheados (re-navegación al mapa)
+        this.sincronizarMarcadores(this.puntoInteresService.puntosFiltrados());
+      });
     });
   }
 
@@ -151,18 +159,12 @@ export class MapComponent implements OnDestroy {
              </div>`,
       iconSize: [40, 40],
       iconAnchor: [20, 40],
-      popupAnchor: [0, -42],
     });
 
     const marker = L.marker([punto.latitud, punto.longitud], { icon });
-    const desc = punto.descripcion
-      ? `<br><span class="popup-desc">${punto.descripcion}</span>`
-      : '';
-    marker.bindPopup(
-      `<strong class="popup-titulo">${punto.titulo}</strong>
-       <br><span class="popup-cat" style="color:${color}">${label}</span>
-       ${desc}`,
-    );
+    marker.on('click', () => {
+      this.zone.run(() => this.selectedPunto.set(punto));
+    });
     return marker;
   }
 }

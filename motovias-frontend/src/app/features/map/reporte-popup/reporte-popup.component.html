@@ -1,0 +1,78 @@
+@if (punto()) {
+  <div
+    class="popup-backdrop"
+    (click)="onBackdropClick($event)"
+  >
+    <article
+      class="popup-card"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'popup-title-' + punto()!.id"
+    >
+      <header class="popup-header">
+        <h2 [id]="'popup-title-' + punto()!.id" class="popup-titulo">
+          {{ punto()!.titulo }}
+        </h2>
+        <button
+          #closeBtn
+          class="popup-close-btn"
+          type="button"
+          (click)="close()"
+          aria-label="Cerrar"
+        >
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="popup-body">
+        <div class="popup-badges">
+          @if (catConfig()) {
+            <span
+              class="badge badge-cat"
+              [style.background]="catConfig()!.color + '22'"
+              [style.color]="catConfig()!.color"
+              [style.border-color]="catConfig()!.color + '55'"
+            >
+              {{ catConfig()!.label }}
+            </span>
+          }
+          @if (estadoConfig()) {
+            <span
+              class="badge badge-estado"
+              [style.background]="estadoConfig()!.bg"
+              [style.color]="estadoConfig()!.color"
+            >
+              {{ estadoConfig()!.label }}
+            </span>
+          }
+        </div>
+
+        @if (punto()!.descripcion) {
+          <p class="popup-descripcion">{{ punto()!.descripcion }}</p>
+        }
+
+        <dl class="popup-meta">
+          @if (punto()!.nombreUsuario ?? punto()!.emailUsuario) {
+            <div class="meta-row">
+              <dt class="meta-icon"><i class="pi pi-user" aria-hidden="true"></i></dt>
+              <dd>{{ punto()!.nombreUsuario ?? punto()!.emailUsuario }}</dd>
+            </div>
+          }
+          @if (punto()!.fechaCreacion) {
+            <div class="meta-row">
+              <dt class="meta-icon"><i class="pi pi-calendar" aria-hidden="true"></i></dt>
+              <dd>{{ punto()!.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+          }
+        </dl>
+      </div>
+
+      <footer class="popup-footer">
+        <button class="btn-detalle" type="button" (click)="verDetalle()">
+          Ver detalle
+          <i class="pi pi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </footer>
+    </article>
+  </div>
+}

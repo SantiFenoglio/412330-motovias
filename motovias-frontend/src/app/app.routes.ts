@@ -28,7 +28,14 @@ export const routes: Routes = [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
-  // Raíz → /map; authGuard redirige a login si no hay sesión.
+  {
+    path: 'reporte/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/reporte/reporte-detail/reporte-detail.component').then(
+        (m) => m.ReporteDetailComponent,
+      ),
+  },
   { path: '', redirectTo: '/map', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' },
 ];
