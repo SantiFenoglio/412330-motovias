@@ -3,10 +3,39 @@ import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
-    path: 'map',
+    path: '',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/map/map.component').then((m) => m.MapComponent),
+      import('./shared/layout/layout.component').then((m) => m.LayoutComponent),
+    children: [
+      {
+        path: 'map',
+        loadComponent: () =>
+          import('./features/map/map.component').then((m) => m.MapComponent),
+      },
+      {
+        path: 'mis-reportes',
+        loadComponent: () =>
+          import('./features/mis-reportes/mis-reportes.component').then(
+            (m) => m.MisReportesComponent,
+          ),
+      },
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('./features/perfil/perfil.component').then(
+            (m) => m.PerfilComponent,
+          ),
+      },
+      {
+        path: 'reporte/:id',
+        loadComponent: () =>
+          import('./features/reporte/reporte-detail/reporte-detail.component').then(
+            (m) => m.ReporteDetailComponent,
+          ),
+      },
+      { path: '', redirectTo: 'map', pathMatch: 'full' },
+    ],
   },
   {
     path: 'auth',
@@ -28,14 +57,5 @@ export const routes: Routes = [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
-  {
-    path: 'reporte/:id',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/reporte/reporte-detail/reporte-detail.component').then(
-        (m) => m.ReporteDetailComponent,
-      ),
-  },
-  { path: '', redirectTo: '/map', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' },
 ];

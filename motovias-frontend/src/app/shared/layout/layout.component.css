@@ -1,0 +1,23 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.layout-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Compensa el navbar fijo superior en desktop */
+  padding-top: 3.75rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .layout-content {
+    padding-top: 0;
+    /* Compensa la barra inferior fija en mobile */
+    padding-bottom: 3.5rem;
+  }
+}

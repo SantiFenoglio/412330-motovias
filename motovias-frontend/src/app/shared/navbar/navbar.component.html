@@ -1,0 +1,58 @@
+<nav class="navbar" aria-label="Navegación principal">
+
+  <!-- Marca: solo desktop -->
+  <a [routerLink]="'/map'" class="nav-brand" aria-label="Motovías — ir al mapa">
+    <i class="pi pi-directions-alt" aria-hidden="true"></i>
+    <span>Motovías</span>
+  </a>
+
+  <!-- Links de navegación (desktop: fila central; mobile: tabs inferiores) -->
+  <ul class="nav-links" role="list">
+    @for (item of navItems; track item.route) {
+      <li class="nav-item">
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="link--active"
+          class="nav-link"
+          [attr.aria-label]="item.ariaLabel"
+        >
+          <i [class]="item.icon + ' nav-icon'" aria-hidden="true"></i>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      </li>
+    }
+
+    <!-- Salir: tab visible solo en mobile -->
+    <li class="nav-item logout-tab">
+      <button
+        class="nav-link"
+        type="button"
+        (click)="logout()"
+        aria-label="Cerrar sesión"
+      >
+        <i class="pi pi-sign-out nav-icon" aria-hidden="true"></i>
+        <span class="nav-label">Salir</span>
+      </button>
+    </li>
+  </ul>
+
+  <!-- Sesión: solo desktop -->
+  <div class="nav-session" aria-label="Opciones de sesión">
+    @if (currentUser()) {
+      <div class="user-chip" [title]="currentUser()!.email">
+        <i class="pi pi-user-circle" aria-hidden="true"></i>
+        <span class="user-chip__name">{{ currentUser()!.nombre || currentUser()!.email }}</span>
+      </div>
+    }
+    <button
+      class="logout-btn"
+      type="button"
+      (click)="logout()"
+      aria-label="Cerrar sesión"
+    >
+      <i class="pi pi-sign-out" aria-hidden="true"></i>
+      <span>Cerrar sesión</span>
+    </button>
+  </div>
+
+</nav>

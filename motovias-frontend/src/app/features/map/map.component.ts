@@ -10,9 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
 import * as L from 'leaflet';
-import { AuthService } from '../../core/services/auth.service';
 import { PuntoInteresService } from '../../core/services/punto-interes.service';
 import { Categoria, PuntoInteres } from '../../core/models/punto-interes.model';
 import { GeolocationService, UserCoords } from '../../core/services/geolocation.service';
@@ -74,8 +72,6 @@ export class MapComponent implements OnDestroy {
   readonly mapRef = viewChild.required<ElementRef>('mapContainer');
 
   private readonly zone = inject(NgZone);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly geolocationService = inject(GeolocationService);
   readonly puntoInteresService = inject(PuntoInteresService);
 
@@ -104,11 +100,6 @@ export class MapComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.map?.remove();
     this.map = undefined;
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/auth/login']);
   }
 
   recenter(): void {

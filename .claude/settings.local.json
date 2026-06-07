@@ -16,7 +16,11 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\" -Recurse | Where-Object { $_.PSIsContainer } | Select-Object FullName)",
       "Bash(node -e \"const p=require\\('./node_modules/primeicons/package.json'\\); console.log\\('primeicons:', p.version\\)\")",
       "Bash(node -e \"const p=require\\('./node_modules/primeng/package.json'\\); console.log\\('primeng:', p.version\\)\")",
-      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('C:/Users/Santino04/Desktop/412330-motovias/motovias-frontend/node_modules/primeicons/primeicons.css','utf8'\\); const matches=css.match\\(/\\\\.pi-[a-z0-9-]+/g\\); const icons=new Set\\(matches\\); ['pi-crosshairs','pi-map-marker','pi-compass','pi-bullseye','pi-send','pi-target','pi-location'].forEach\\(i => console.log\\(i, icons.has\\('.'+i\\) ? '✓' : '✗'\\)\\)\")"
+      "Bash(node -e \"const fs=require\\('fs'\\); const css=fs.readFileSync\\('C:/Users/Santino04/Desktop/412330-motovias/motovias-frontend/node_modules/primeicons/primeicons.css','utf8'\\); const matches=css.match\\(/\\\\.pi-[a-z0-9-]+/g\\); const icons=new Set\\(matches\\); ['pi-crosshairs','pi-map-marker','pi-compass','pi-bullseye','pi-send','pi-target','pi-location'].forEach\\(i => console.log\\(i, icons.has\\('.'+i\\) ? '✓' : '✗'\\)\\)\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\" -Force)",
+      "Bash(Select-Object Name, Mode)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\" -Recurse -Force | Select-Object FullName, Mode | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\"\\), \".\" })"
     ]
   }
 }
