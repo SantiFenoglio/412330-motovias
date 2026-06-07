@@ -23,6 +23,20 @@
       role="region"
       aria-label="Mapa cartográfico de rutas"
     ></div>
+
+    <!-- Botón flotante de recentrado en ubicación actual -->
+    <div class="recenter-wrapper">
+      <p-button
+        icon="pi pi-bullseye"
+        [rounded]="true"
+        severity="info"
+        size="large"
+        (onClick)="recenter()"
+        ariaLabel="Centrar mapa en mi ubicación"
+        pTooltip="Mi ubicación"
+        tooltipPosition="left"
+      />
+    </div>
   </div>
 
   <!-- Popup de detalle del marcador seleccionado -->

@@ -160,6 +160,35 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Marcador "Mi Ubicación" ────────────────────────────────────
+   Fuera del shadow DOM; deben vivir en el scope global como .moto-pin */
+.user-location-pin {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-location-pulse {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  top: 50%;
+  left: 50%;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  background: rgba(29, 78, 216, 0.28);
+  animation: user-location-pulse 2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes user-location-pulse {
+  0%   { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(1);   opacity: 0; }
+}
+
 /* ─── Popups Leaflet ────────────────────────────────────────── */
 .leaflet-popup-content .popup-titulo {
   font-weight: 600;
