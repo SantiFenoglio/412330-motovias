@@ -4,6 +4,7 @@ import _0.motovias_backend.dto.LoginRequest;
 import _0.motovias_backend.dto.LoginResponse;
 import _0.motovias_backend.dto.RegisterRequest;
 import _0.motovias_backend.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<LoginResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 }

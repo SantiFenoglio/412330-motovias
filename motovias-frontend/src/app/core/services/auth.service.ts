@@ -9,6 +9,8 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   nombre: string;
+  apellido?: string;
+  tipoMotocicleta?: string;
   email: string;
   password: string;
 }

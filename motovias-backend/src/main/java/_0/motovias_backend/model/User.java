@@ -34,10 +34,19 @@ public class User {
     @Column(nullable = false)
     private boolean activo;
 
-    /**
-     * Tipo de motocicleta del usuario según perfil definido en el KickOff.
-     * Ej: "SPORT", "NAKED", "ADVENTURE", "SCOOTER", etc.
-     */
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_motocicleta")
-    private String tipoMotocicleta;
+    private TipoMotocicleta tipoMotocicleta;
+
+    @Column(name = "tipo_sangre")
+    private String tipoSangre;
+
+    @Column(name = "contacto_emergencia_nombre")
+    private String contactoEmergenciaNombre;
+
+    @Column(name = "contacto_emergencia_telefono")
+    private String contactoEmergenciaTelefono;
+
+    @Column(name = "direccion")
+    private String direccion;
 }

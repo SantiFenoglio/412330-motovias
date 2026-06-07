@@ -4,6 +4,7 @@ import _0.motovias_backend.dto.LoginRequest;
 import _0.motovias_backend.dto.LoginResponse;
 import _0.motovias_backend.dto.RegisterRequest;
 import _0.motovias_backend.model.Role;
+import _0.motovias_backend.model.TipoMotocicleta;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -97,7 +98,7 @@ class TestControllerIntegrationTest {
         register.setNombre("Integracion");
         register.setApellido("Test");
         register.setRole(Role.USER);
-        register.setTipoMotocicleta("SPORT");
+        register.setTipoMotocicleta(TipoMotocicleta.SPORT);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

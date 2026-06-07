@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.5rem 1rem;
   background: #f1f5f9;
 }
 
@@ -15,7 +15,7 @@
     0 8px 24px rgba(0, 0, 0, 0.06);
   padding: 2.25rem 2rem;
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
 }
 
 .auth-header {
@@ -37,10 +37,23 @@
   margin: 0;
 }
 
+/* Alert de error del backend */
+.auth-message {
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.125rem;
+  gap: 1rem;
+}
+
+/* Grid de 2 columnas para Nombre/Apellido */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
 }
 
 .field {
@@ -111,11 +124,46 @@
   text-decoration: underline;
 }
 
-@media (max-width: 480px) {
+/* Panel de requisitos de contraseña */
+.password-reqs {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0.625rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.req-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #dc2626;
+  transition: color 0.15s;
+}
+
+.req-item .pi {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.req-item--met {
+  color: #16a34a;
+}
+
+@media (max-width: 520px) {
   .auth-card {
     padding: 1.75rem 1.25rem;
     border-radius: 8px;
     box-shadow: none;
     border: 1px solid #e2e8f0;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }

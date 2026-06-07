@@ -14,32 +14,52 @@
     }
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
-      <div class="field">
-        <label for="nombre" class="field-label">Nombre</label>
-        <input
-          id="nombre"
-          type="text"
-          pInputText
-          formControlName="nombre"
-          placeholder="Tu nombre"
-          autocomplete="given-name"
-          class="field-input"
-          [class.field-input--invalid]="nombreControl.invalid && nombreControl.touched"
-          aria-describedby="nombre-error"
-        />
-        @if (nombreControl.invalid && nombreControl.touched) {
-          <small id="nombre-error" class="field-error" role="alert">
-            @if (nombreControl.errors?.['required']) {
-              El nombre es requerido.
-            } @else if (nombreControl.errors?.['minlength']) {
-              Mínimo 2 caracteres.
-            }
-          </small>
-        }
+
+      <!-- Nombre + Apellido en grilla de 2 columnas -->
+      <div class="form-grid">
+        <div class="field">
+          <label for="nombre" class="field-label">Nombre *</label>
+          <input
+            id="nombre"
+            type="text"
+            pInputText
+            formControlName="nombre"
+            placeholder="Tu nombre"
+            autocomplete="given-name"
+            class="field-input"
+            [class.field-input--invalid]="nombreControl.invalid && nombreControl.touched"
+            aria-required="true"
+            aria-describedby="nombre-error"
+            [attr.aria-invalid]="nombreControl.invalid && nombreControl.touched ? 'true' : null"
+          />
+          @if (nombreControl.invalid && nombreControl.touched) {
+            <small id="nombre-error" class="field-error" role="alert">
+              @if (nombreControl.errors?.['required']) {
+                El nombre es requerido.
+              } @else if (nombreControl.errors?.['minlength']) {
+                Mínimo 2 caracteres.
+              }
+            </small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="apellido" class="field-label">Apellido</label>
+          <input
+            id="apellido"
+            type="text"
+            pInputText
+            formControlName="apellido"
+            placeholder="Tu apellido"
+            autocomplete="family-name"
+            class="field-input"
+          />
+        </div>
       </div>
 
+      <!-- Email -->
       <div class="field">
-        <label for="email" class="field-label">Correo electrónico</label>
+        <label for="email" class="field-label">Correo electrónico *</label>
         <input
           id="email"
           type="email"
@@ -49,7 +69,9 @@
           autocomplete="email"
           class="field-input"
           [class.field-input--invalid]="emailControl.invalid && emailControl.touched"
+          aria-required="true"
           aria-describedby="email-error"
+          [attr.aria-invalid]="emailControl.invalid && emailControl.touched ? 'true' : null"
         />
         @if (emailControl.invalid && emailControl.touched) {
           <small id="email-error" class="field-error" role="alert">
@@ -62,31 +84,63 @@
         }
       </div>
 
+      <!-- Tipo de Motocicleta -->
       <div class="field">
-        <label for="password" class="field-label">Contraseña</label>
+        <label for="tipoMoto" class="field-label">Tipo de motocicleta</label>
+        <p-select
+          inputId="tipoMoto"
+          formControlName="tipoMotocicleta"
+          [options]="tipoMotocicletaOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccioná tu tipo de moto"
+          [showClear]="true"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+
+      <!-- Contraseña -->
+      <div class="field">
+        <label for="password" class="field-label">Contraseña *</label>
         <p-password
           inputId="password"
           formControlName="password"
-          placeholder="Mínimo 6 caracteres"
+          placeholder="Creá una contraseña segura"
           [feedback]="false"
           [toggleMask]="true"
           styleClass="motovias-password"
           autocomplete="new-password"
-          aria-describedby="password-error"
+          [attr.aria-describedby]="showPasswordReqs() ? 'pw-reqs' : (passwordControl.invalid && passwordControl.touched ? 'password-error' : null)"
+          [attr.aria-invalid]="passwordControl.invalid && passwordControl.touched ? 'true' : null"
         />
-        @if (passwordControl.invalid && passwordControl.touched) {
+        @if (passwordControl.invalid && passwordControl.touched && passwordControl.errors?.['required']) {
           <small id="password-error" class="field-error" role="alert">
-            @if (passwordControl.errors?.['required']) {
-              La contraseña es requerida.
-            } @else if (passwordControl.errors?.['minlength']) {
-              Mínimo 6 caracteres.
-            }
+            La contraseña es requerida.
           </small>
+        }
+        @if (showPasswordReqs()) {
+          <ul
+            id="pw-reqs"
+            class="password-reqs"
+            aria-label="Requisitos de la contraseña"
+            aria-live="polite"
+          >
+            @for (req of passwordRequirements(); track req.label) {
+              <li class="req-item" [class.req-item--met]="req.met">
+                <i
+                  [class]="req.met ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+                  aria-hidden="true"
+                ></i>
+                {{ req.label }}
+              </li>
+            }
+          </ul>
         }
       </div>
 
+      <!-- Confirmar contraseña -->
       <div class="field">
-        <label for="confirmPassword" class="field-label">Confirmá la contraseña</label>
+        <label for="confirmPassword" class="field-label">Confirmá la contraseña *</label>
         <p-password
           inputId="confirmPassword"
           formControlName="confirmPassword"
@@ -96,6 +150,7 @@
           styleClass="motovias-password"
           autocomplete="new-password"
           aria-describedby="confirm-password-error"
+          [attr.aria-invalid]="confirmPasswordControl.touched && (confirmPasswordControl.errors?.['required'] || form.errors?.['passwordsMismatch']) ? 'true' : null"
         />
         @if (
           confirmPasswordControl.touched &&

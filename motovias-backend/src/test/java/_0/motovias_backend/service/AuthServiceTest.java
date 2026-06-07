@@ -4,6 +4,7 @@ import _0.motovias_backend.dto.LoginRequest;
 import _0.motovias_backend.dto.LoginResponse;
 import _0.motovias_backend.dto.RegisterRequest;
 import _0.motovias_backend.model.Role;
+import _0.motovias_backend.model.TipoMotocicleta;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.security.JwtService;
@@ -191,7 +192,7 @@ class AuthServiceTest {
         r.setNombre("Rider");
         r.setApellido("Test");
         r.setRole(Role.USER);
-        r.setTipoMotocicleta("NAKED");
+        r.setTipoMotocicleta(TipoMotocicleta.NAKED);
         return r;
     }
 

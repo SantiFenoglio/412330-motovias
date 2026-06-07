@@ -1,159 +1,239 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { TipoMotocicleta, UserProfile, UserService } from '../../core/services/user.service';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { ToastModule } from 'primeng/toast';
+import { SkeletonModule } from 'primeng/skeleton';
+import { Password } from 'primeng/password';
+import { MessageService } from 'primeng/api';
+
+export const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+function optionalPasswordValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  return PASSWORD_REGEX.test(control.value) ? null : { passwordWeak: true };
+}
+
+function confirmPasswordValidator(group: AbstractControl): ValidationErrors | null {
+  const pw = group.get('newPassword')?.value;
+  const confirm = group.get('confirmPassword')?.value;
+  if (!pw && !confirm) return null;
+  return pw !== confirm ? { passwordMismatch: true } : null;
+}
 
 @Component({
   selector: 'app-perfil',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
-  template: `
-    <div class="page-shell">
-      <header class="page-header">
-        <h1 class="page-title">
-          <i class="pi pi-user" aria-hidden="true"></i>
-          Mi Perfil
-        </h1>
-      </header>
-
-      @if (currentUser()) {
-        <section class="profile-card" aria-label="Información de la cuenta">
-          <div class="avatar" aria-hidden="true">
-            {{ initials() }}
-          </div>
-
-          <div class="profile-info">
-            <p class="profile-name">{{ currentUser()!.nombre }}</p>
-            <p class="profile-email">{{ currentUser()!.email }}</p>
-          </div>
-        </section>
-      }
-
-      <div class="actions">
-        <button
-          class="btn-logout"
-          type="button"
-          (click)="logout()"
-          aria-label="Cerrar sesión de la cuenta"
-        >
-          <i class="pi pi-sign-out" aria-hidden="true"></i>
-          Cerrar sesión
-        </button>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .page-shell {
-      max-width: 28rem;
-      margin: 0 auto;
-      padding: 2rem 1.25rem;
-    }
-
-    .page-header { margin-bottom: 2rem; }
-
-    .page-title {
-      display: flex;
-      align-items: center;
-      gap: 0.625rem;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 0;
-    }
-
-    .page-title .pi { color: #3b82f6; font-size: 1.375rem; }
-
-    .profile-card {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      padding: 1.5rem;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      margin-bottom: 2rem;
-    }
-
-    .avatar {
-      width: 3.5rem;
-      height: 3.5rem;
-      border-radius: 50%;
-      background: #1e293b;
-      color: #f8fafc;
-      font-size: 1.25rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      letter-spacing: 0.05em;
-    }
-
-    .profile-info { min-width: 0; }
-
-    .profile-name {
-      font-size: 1.0625rem;
-      font-weight: 600;
-      color: #0f172a;
-      margin: 0 0 0.25rem;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .profile-email {
-      font-size: 0.875rem;
-      color: #64748b;
-      margin: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .actions { display: flex; }
-
-    .btn-logout {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      min-height: 2.75rem;
-      background: transparent;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 8px;
-      color: #dc2626;
-      font-size: 0.9375rem;
-      font-family: inherit;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-    }
-
-    .btn-logout:hover {
-      background: #fef2f2;
-      border-color: #fca5a5;
-    }
-
-    .btn-logout:focus-visible {
-      outline: 2px solid #dc2626;
-      outline-offset: 2px;
-    }
-  `],
+  imports: [
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    SelectModule,
+    ToastModule,
+    SkeletonModule,
+    Password,
+  ],
+  providers: [MessageService],
+  templateUrl: './perfil.component.html',
+  styleUrl: './perfil.component.css',
 })
-export class PerfilComponent {
+export class PerfilComponent implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
   private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
 
-  readonly currentUser = this.authService.currentUser;
+  readonly profile = signal<UserProfile | null>(null);
+  readonly isEditing = signal(false);
+  readonly isSaving = signal(false);
+  readonly isLoading = signal(true);
 
-  initials(): string {
-    const user = this.currentUser();
-    if (!user) return '?';
-    const src = user.nombre || user.email;
-    return src
-      .split(/[\s@.]+/)
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? '')
-      .join('');
+  readonly displayName = computed(() => {
+    const p = this.profile();
+    if (!p) return this.authService.currentUser()?.nombre ?? '';
+    return p.apellido ? `${p.nombre} ${p.apellido}` : p.nombre;
+  });
+
+  readonly initials = computed(() => {
+    const p = this.profile();
+    const src = p
+      ? p.apellido
+        ? `${p.nombre} ${p.apellido}`
+        : p.nombre
+      : this.authService.currentUser()?.nombre || this.authService.currentUser()?.email || '';
+    return (
+      src
+        .split(/[\s@.]+/)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+
+  readonly tipoMotoLabel = computed(() => {
+    const tipo = this.profile()?.tipoMotocicleta;
+    if (!tipo) return null;
+    return this.tipoMotocicletaOptions.find((o) => o.value === tipo)?.label ?? tipo;
+  });
+
+  readonly tipoMotocicletaOptions: { label: string; value: TipoMotocicleta }[] = [
+    { label: 'Custom', value: 'CUSTOM' },
+    { label: 'Adventure', value: 'ADVENTURE' },
+    { label: 'Sport', value: 'SPORT' },
+    { label: 'Naked', value: 'NAKED' },
+    { label: 'Touring', value: 'TOURING' },
+    { label: 'Enduro', value: 'ENDURO' },
+  ];
+
+  readonly tipoSangreOptions = [
+    { label: 'A+', value: 'A+' },
+    { label: 'A-', value: 'A-' },
+    { label: 'B+', value: 'B+' },
+    { label: 'B-', value: 'B-' },
+    { label: 'AB+', value: 'AB+' },
+    { label: 'AB-', value: 'AB-' },
+    { label: 'O+', value: 'O+' },
+    { label: 'O-', value: 'O-' },
+  ];
+
+  readonly form = this.fb.group(
+    {
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
+      apellido: [''],
+      tipoMotocicleta: [null as TipoMotocicleta | null],
+      tipoSangre: [null as string | null],
+      direccion: [''],
+      contactoEmergenciaNombre: [''],
+      contactoEmergenciaTelefono: [''],
+      email: [{ value: '', disabled: true }],
+      newPassword: ['', [optionalPasswordValidator]],
+      confirmPassword: [''],
+    },
+    { validators: confirmPasswordValidator },
+  );
+
+  readonly passwordValue = toSignal(this.form.controls.newPassword.valueChanges, {
+    initialValue: '',
+  });
+
+  readonly passwordRequirements = computed(() => {
+    const pw = this.passwordValue() ?? '';
+    return [
+      { label: 'Al menos 8 caracteres', met: pw.length >= 8 },
+      { label: 'Al menos una minúscula (a-z)', met: /[a-z]/.test(pw) },
+      { label: 'Al menos una mayúscula (A-Z)', met: /[A-Z]/.test(pw) },
+      { label: 'Al menos un número (0-9)', met: /\d/.test(pw) },
+      { label: 'Al menos un carácter especial (@$!%*?&)', met: /[@$!%*?&]/.test(pw) },
+    ];
+  });
+
+  readonly showPasswordReqs = computed(() => !!this.passwordValue());
+
+  ngOnInit(): void {
+    this.userService.getProfile().subscribe({
+      next: (profile) => {
+        this.profile.set(profile);
+        this.isLoading.set(false);
+        this.form.patchValue({
+          nombre: profile.nombre,
+          apellido: profile.apellido ?? '',
+          tipoMotocicleta: profile.tipoMotocicleta,
+          tipoSangre: profile.tipoSangre ?? null,
+          direccion: profile.direccion ?? '',
+          contactoEmergenciaNombre: profile.contactoEmergenciaNombre ?? '',
+          contactoEmergenciaTelefono: profile.contactoEmergenciaTelefono ?? '',
+          email: profile.email,
+        });
+      },
+      error: () => {
+        this.isLoading.set(false);
+        const user = this.authService.currentUser();
+        if (user) {
+          this.form.patchValue({ nombre: user.nombre, email: user.email });
+        }
+      },
+    });
+  }
+
+  startEdit(): void {
+    this.isEditing.set(true);
+  }
+
+  cancelEdit(): void {
+    const p = this.profile();
+    if (p) {
+      this.form.patchValue({
+        nombre: p.nombre,
+        apellido: p.apellido ?? '',
+        tipoMotocicleta: p.tipoMotocicleta,
+        tipoSangre: p.tipoSangre ?? null,
+        direccion: p.direccion ?? '',
+        contactoEmergenciaNombre: p.contactoEmergenciaNombre ?? '',
+        contactoEmergenciaTelefono: p.contactoEmergenciaTelefono ?? '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    }
+    this.form.markAsUntouched();
+    this.isEditing.set(false);
+  }
+
+  saveProfile(): void {
+    if (this.form.invalid) return;
+    this.isSaving.set(true);
+    const v = this.form.getRawValue();
+    this.userService
+      .updateProfile({
+        nombre: v.nombre!,
+        apellido: v.apellido || null,
+        tipoMotocicleta: v.tipoMotocicleta ?? null,
+        tipoSangre: v.tipoSangre ?? null,
+        direccion: v.direccion || null,
+        contactoEmergenciaNombre: v.contactoEmergenciaNombre || null,
+        contactoEmergenciaTelefono: v.contactoEmergenciaTelefono || null,
+        newPassword: v.newPassword || null,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.profile.set(updated);
+          this.isEditing.set(false);
+          this.isSaving.set(false);
+          this.form.patchValue({ newPassword: '', confirmPassword: '' });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Perfil actualizado',
+            detail: 'Los cambios se guardaron correctamente.',
+          });
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo actualizar el perfil. Intentá de nuevo.',
+          });
+        },
+      });
   }
 
   logout(): void {
