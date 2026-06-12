@@ -11,8 +11,18 @@
       aria-label="Mapa cartográfico de rutas"
     ></div>
 
-    <!-- Botón flotante de recentrado en ubicación actual -->
+    <!-- Botones flotantes -->
     <div class="recenter-wrapper">
+      <p-button
+        icon="pi pi-plus"
+        [rounded]="true"
+        severity="success"
+        size="large"
+        (onClick)="showReporteForm.set(true)"
+        ariaLabel="Crear nuevo reporte"
+        pTooltip="Nuevo reporte"
+        tooltipPosition="left"
+      />
       <p-button
         icon="pi pi-bullseye"
         [rounded]="true"
@@ -30,5 +40,11 @@
   <app-reporte-popup
     [punto]="selectedPunto()"
     (closed)="selectedPunto.set(null)"
+  />
+
+  <!-- Formulario de nuevo reporte -->
+  <app-reporte-form
+    [visible]="showReporteForm()"
+    (closed)="showReporteForm.set(false)"
   />
 </main>

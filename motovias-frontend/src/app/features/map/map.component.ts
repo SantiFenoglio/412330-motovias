@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -10,13 +11,16 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
 import { PuntoInteresService } from '../../core/services/punto-interes.service';
+import { ReporteWebSocketService } from '../../core/services/reporte-websocket.service';
 import { Categoria, PuntoInteres } from '../../core/models/punto-interes.model';
 import { GeolocationService, UserCoords } from '../../core/services/geolocation.service';
 import { Button } from 'primeng/button';
 import { FilterPanelComponent } from './filter-panel/filter-panel.component';
 import { ReportePopupComponent } from './reporte-popup/reporte-popup.component';
+import { ReporteFormComponent } from './reporte-form/reporte-form.component';
 
 const CATEGORY_SVG: Record<Categoria, string> = {
   TALLER: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -64,7 +68,7 @@ const ARGENTINA_CENTER: [number, number] = [-34.6, -64.1];
 @Component({
   selector: 'app-map',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Button, FilterPanelComponent, ReportePopupComponent],
+  imports: [Button, FilterPanelComponent, ReportePopupComponent, ReporteFormComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
 })
@@ -72,14 +76,17 @@ export class MapComponent implements OnDestroy {
   readonly mapRef = viewChild.required<ElementRef>('mapContainer');
 
   private readonly zone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly geolocationService = inject(GeolocationService);
   readonly puntoInteresService = inject(PuntoInteresService);
+  private readonly wsService = inject(ReporteWebSocketService);
 
   private map: L.Map | undefined;
   private readonly leafletMarkers = new Map<number, L.Marker>();
   private userLocationMarker: L.Marker | undefined;
 
   readonly selectedPunto = signal<PuntoInteres | null>(null);
+  readonly showReporteForm = signal(false);
 
   constructor() {
     effect(() => {
@@ -95,6 +102,10 @@ export class MapComponent implements OnDestroy {
         this.sincronizarMarcadores(this.puntoInteresService.puntosFiltrados());
       });
     });
+
+    this.wsService.nuevosReportes$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((reporte) => this.puntoInteresService.agregarNuevoReporte(reporte));
   }
 
   ngOnDestroy(): void {

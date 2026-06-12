@@ -1,0 +1,50 @@
+.reporte-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding-top: 1.25rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Ensure p-floatlabel fills the field */
+.form-field p-floatlabel,
+.form-field :deep(p-floatlabel) {
+  width: 100%;
+}
+
+/* Full-width inputs */
+.form-field input[pInputText],
+.form-field textarea[pTextarea] {
+  width: 100%;
+}
+
+.field-errors {
+  min-height: 1.25rem;
+}
+
+.form-error {
+  color: var(--p-red-500);
+  font-size: 0.8rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+:deep(.gps-message) {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+/* Full-width select inside floatlabel */
+:deep(.w-full .p-select) {
+  width: 100%;
+}

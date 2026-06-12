@@ -21,13 +21,24 @@ export class PuntoInteresService {
   );
 
   private readonly _categoriasActivas = signal<Categoria[]>([...TODAS_LAS_CATEGORIAS]);
+  private readonly _nuevosReportes = signal<PuntoInteres[]>([]);
 
   readonly categoriasActivas = this._categoriasActivas.asReadonly();
 
   readonly puntosFiltrados = computed(() => {
     const activas = this._categoriasActivas();
-    return this._todos().filter((p) => activas.includes(p.categoria));
+    const todos = [...this._todos(), ...this._nuevosReportes()];
+    return todos.filter((p) => activas.includes(p.categoria));
   });
+
+  agregarNuevoReporte(punto: PuntoInteres): void {
+    this._nuevosReportes.update((list) => {
+      const yaExiste =
+        list.some((p) => p.id === punto.id) ||
+        this._todos().some((p) => p.id === punto.id);
+      return yaExiste ? list : [...list, punto];
+    });
+  }
 
   toggleCategoria(cat: Categoria): void {
     this._categoriasActivas.update((current) =>

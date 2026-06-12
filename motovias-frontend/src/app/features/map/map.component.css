@@ -26,15 +26,15 @@
   height: 100%;
 }
 
-/* ── Botón flotante de recentrado ────────────────────────────────────────── */
+/* ── Botones flotantes ───────────────────────────────────────────────────── */
 
 .recenter-wrapper {
   position: absolute;
   bottom: 5rem;
   right: 1rem;
   z-index: 1000;
-  box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.25),
-    0 1px 4px rgba(0, 0, 0, 0.15);
-  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
 }

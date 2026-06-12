@@ -1,0 +1,139 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="!$event && closed.emit()"
+  (onShow)="onDialogShow()"
+  (onHide)="onDialogHide()"
+  header="Nuevo reporte"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+  aria-labelledby="reporte-dialog-title"
+>
+  <!-- Estado GPS -->
+  @if (gpsState() === 'loading') {
+    <p-message
+      severity="info"
+      text="Obteniendo tu ubicación GPS…"
+      styleClass="gps-message"
+    />
+  }
+  @if (gpsState() === 'error') {
+    <p-message
+      severity="warn"
+      text="No se pudo obtener la ubicación. El reporte no puede enviarse sin coordenadas."
+      styleClass="gps-message"
+    />
+  }
+  @if (gpsState() === 'success') {
+    <p-message
+      severity="success"
+      text="Ubicación capturada correctamente."
+      styleClass="gps-message"
+    />
+  }
+
+  <!-- Error de envío -->
+  @if (submitError()) {
+    <p-message
+      severity="error"
+      [text]="submitError()!"
+      styleClass="gps-message"
+    />
+  }
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    class="reporte-form"
+    novalidate
+  >
+    <!-- Título -->
+    <div class="form-field">
+      <p-floatlabel>
+        <input
+          id="titulo"
+          type="text"
+          pInputText
+          formControlName="titulo"
+          [class.ng-invalid]="tituloInvalid"
+          aria-describedby="titulo-error"
+          autocomplete="off"
+        />
+        <label for="titulo">Título <span aria-hidden="true">*</span></label>
+      </p-floatlabel>
+      <div id="titulo-error" aria-live="polite" class="field-errors">
+        @if (tituloInvalid) {
+          @if (form.get('titulo')?.hasError('required')) {
+            <small class="form-error">El título es obligatorio.</small>
+          } @else if (form.get('titulo')?.hasError('minlength')) {
+            <small class="form-error">Mínimo 5 caracteres.</small>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Categoría -->
+    <div class="form-field">
+      <p-floatlabel>
+        <p-select
+          inputId="categoria"
+          formControlName="categoria"
+          [options]="categorias"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccioná una categoría"
+          [class.ng-invalid]="categoriaInvalid"
+          aria-describedby="categoria-error"
+          styleClass="w-full"
+        />
+        <label for="categoria">Categoría <span aria-hidden="true">*</span></label>
+      </p-floatlabel>
+      <div id="categoria-error" aria-live="polite" class="field-errors">
+        @if (categoriaInvalid) {
+          <small class="form-error">Seleccioná una categoría.</small>
+        }
+      </div>
+    </div>
+
+    <!-- Descripción -->
+    <div class="form-field">
+      <p-floatlabel>
+        <textarea
+          id="descripcion"
+          pTextarea
+          formControlName="descripcion"
+          rows="4"
+          [class.ng-invalid]="descripcionInvalid"
+          aria-describedby="descripcion-error"
+          style="width: 100%; resize: vertical;"
+        ></textarea>
+        <label for="descripcion">Descripción <span aria-hidden="true">*</span></label>
+      </p-floatlabel>
+      <div id="descripcion-error" aria-live="polite" class="field-errors">
+        @if (descripcionInvalid) {
+          <small class="form-error">La descripción es obligatoria.</small>
+        }
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="form-actions">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="onCancel()"
+      />
+      <p-button
+        type="submit"
+        label="Enviar reporte"
+        icon="pi pi-send"
+        iconPos="right"
+        [loading]="submitting()"
+        [disabled]="form.invalid || gpsState() !== 'success'"
+      />
+    </div>
+  </form>
+</p-dialog>
