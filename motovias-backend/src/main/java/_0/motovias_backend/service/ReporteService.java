@@ -13,6 +13,7 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,13 @@ public class ReporteService {
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+    public List<ReporteResponseDTO> listarMios(User usuario) {
+        return repository.findByUsuarioIdOrderByFechaCreacionDesc(usuario.getId())
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
     public ReporteResponseDTO crear(ReporteRequestDTO dto, User usuario) {
         Point ubicacion = GF.createPoint(new Coordinate(dto.getLongitud(), dto.getLatitud()));

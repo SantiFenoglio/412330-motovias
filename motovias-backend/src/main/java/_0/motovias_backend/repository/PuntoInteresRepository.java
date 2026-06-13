@@ -33,4 +33,6 @@ public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long
             @Param("lon") double lon,
             @Param("radioMetros") double radioMetros
     );
+
+    List<PuntoInteres> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
 }

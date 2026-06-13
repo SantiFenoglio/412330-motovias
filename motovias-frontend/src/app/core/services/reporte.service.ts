@@ -9,6 +9,10 @@ const BASE_URL = 'http://localhost:8080/api/reportes';
 export class ReporteService {
   private readonly http = inject(HttpClient);
 
+  getMisReportes(): Observable<PuntoInteres[]> {
+    return this.http.get<PuntoInteres[]>(BASE_URL);
+  }
+
   crear(request: PuntoInteresRequest): Observable<PuntoInteres> {
     return this.http.post<PuntoInteres>(BASE_URL, request);
   }
