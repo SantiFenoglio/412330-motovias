@@ -39,7 +39,11 @@
   <!-- Popup de detalle del marcador seleccionado -->
   <app-reporte-popup
     [punto]="selectedPunto()"
+    [esOwner]="esOwner()"
+    [esAdmin]="esAdmin()"
     (closed)="selectedPunto.set(null)"
+    (editClicked)="onEditClicked()"
+    (deleteClicked)="onDeleteClicked()"
   />
 
   <!-- Formulario de nuevo reporte -->
@@ -47,4 +51,91 @@
     [visible]="showReporteForm()"
     (closed)="showReporteForm.set(false)"
   />
+
+  <!-- ── Diálogo de edición ────────────────────────────────────────────── -->
+  <p-dialog
+    [header]="'Editar: ' + (editandoPunto()?.titulo ?? '')"
+    [visible]="editandoPunto() !== null"
+    (onHide)="cancelarEdicion()"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '90vw', 'max-width': '500px' }"
+    [contentStyle]="{ overflow: 'visible' }"
+    role="dialog"
+    aria-live="polite"
+  >
+    <form
+      id="edit-form"
+      [formGroup]="editForm"
+      (ngSubmit)="guardarEdicion()"
+      class="edit-form"
+    >
+      <div class="edit-field">
+        <label for="edit-descripcion" class="edit-label">Descripción</label>
+        <textarea
+          pInputTextarea
+          id="edit-descripcion"
+          formControlName="descripcion"
+          [rows]="4"
+          [autoResize]="true"
+          aria-label="Descripción del reporte"
+          style="width:100%; overflow:hidden; resize:none"
+        ></textarea>
+      </div>
+
+      <div class="edit-field">
+        <label for="edit-estado" class="edit-label">Estado <span aria-hidden="true">*</span></label>
+        <p-select
+          id="edit-estado"
+          formControlName="estado"
+          [options]="estadoOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccioná un estado"
+          [style]="{ width: '100%' }"
+          aria-required="true"
+          [attr.aria-invalid]="editForm.get('estado')?.invalid && editForm.get('estado')?.touched"
+        />
+        @if (editForm.get('estado')?.invalid && editForm.get('estado')?.touched) {
+          <small class="edit-error" role="alert">El estado es obligatorio</small>
+        }
+      </div>
+
+      @if (saveError()) {
+        <p class="edit-save-error" role="alert">{{ saveError() }}</p>
+      }
+    </form>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        icon="pi pi-times"
+        severity="secondary"
+        [text]="true"
+        [disabled]="saving()"
+        (click)="cancelarEdicion()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Guardar cambios"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="editForm.invalid || saving()"
+        (click)="guardarEdicion()"
+      ></button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- ── Confirm de eliminación ────────────────────────────────────────── -->
+  <p-confirmDialog
+    [style]="{ maxWidth: '420px' }"
+    acceptButtonStyleClass="p-button-danger"
+  />
+
+  <!-- ── Toast de errores ──────────────────────────────────────────────── -->
+  <p-toast position="bottom-center" />
 </main>

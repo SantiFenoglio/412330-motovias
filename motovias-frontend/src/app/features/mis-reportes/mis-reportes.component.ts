@@ -1,16 +1,43 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ConfirmationService, MessageService, PrimeTemplate } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { Dialog } from 'primeng/dialog';
+import { Select } from 'primeng/select';
+import { TextareaModule } from 'primeng/textarea';
+import { Toast } from 'primeng/toast';
 import { ReporteService } from '../../core/services/reporte.service';
+import { ReporteWebSocketService } from '../../core/services/reporte-websocket.service';
 import {
   CATEGORY_CONFIG,
   ESTADO_CONFIG,
+  EstadoPunto,
   PuntoInteres,
 } from '../../core/models/punto-interes.model';
+
+interface EstadoOption {
+  label: string;
+  value: EstadoPunto;
+}
 
 @Component({
   selector: 'app-mis-reportes',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe],
+  providers: [ConfirmationService, MessageService],
+  imports: [
+    DatePipe,
+    ReactiveFormsModule,
+    ButtonModule,
+    Dialog,
+    ConfirmDialog,
+    Select,
+    TextareaModule,
+    Toast,
+    PrimeTemplate,
+  ],
   template: `
     <div class="page-shell">
       <header class="page-header">
@@ -67,10 +94,116 @@ import {
                   {{ r.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
                 </p>
               }
+              <div class="card-actions" role="group" [attr.aria-label]="'Acciones de ' + r.titulo">
+                <p-button
+                  icon="pi pi-pencil"
+                  label="Editar"
+                  [text]="true"
+                  size="small"
+                  severity="secondary"
+                  (onClick)="onEditClick(r)"
+                  [ariaLabel]="'Editar ' + r.titulo"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  label="Eliminar"
+                  [text]="true"
+                  size="small"
+                  severity="danger"
+                  (onClick)="onDeleteClick(r)"
+                  [ariaLabel]="'Eliminar ' + r.titulo"
+                />
+              </div>
             </li>
           }
         </ul>
       }
+
+      <!-- ── Diálogo de edición ─────────────────────────────────────────── -->
+      <p-dialog
+        [header]="'Editar: ' + (editandoReporte()?.titulo ?? '')"
+        [visible]="editandoReporte() !== null"
+        (onHide)="cancelarEdicion()"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [style]="{ width: '90vw', 'max-width': '500px' }"
+        [contentStyle]="{ overflow: 'visible' }"
+        role="dialog"
+        aria-live="polite"
+      >
+        <form
+          id="mr-edit-form"
+          [formGroup]="editForm"
+          (ngSubmit)="guardarEdicion()"
+          class="edit-form"
+        >
+          <div class="edit-field">
+            <label for="mr-descripcion" class="edit-label">Descripción</label>
+            <textarea
+              pInputTextarea
+              id="mr-descripcion"
+              formControlName="descripcion"
+              [rows]="4"
+              [autoResize]="true"
+              style="width:100%; overflow:hidden; resize:none"
+              aria-label="Descripción del reporte"
+            ></textarea>
+          </div>
+
+          <div class="edit-field">
+            <label for="mr-estado" class="edit-label">
+              Estado <span aria-hidden="true">*</span>
+            </label>
+            <p-select
+              id="mr-estado"
+              formControlName="estado"
+              [options]="estadoOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccioná un estado"
+              [style]="{ width: '100%' }"
+              aria-required="true"
+              [attr.aria-invalid]="editForm.get('estado')?.invalid && editForm.get('estado')?.touched"
+            />
+            @if (editForm.get('estado')?.invalid && editForm.get('estado')?.touched) {
+              <small class="edit-error" role="alert">El estado es obligatorio</small>
+            }
+          </div>
+
+          @if (saveError()) {
+            <p class="edit-save-error" role="alert">{{ saveError() }}</p>
+          }
+        </form>
+
+        <ng-template pTemplate="footer">
+          <button
+            pButton
+            type="button"
+            label="Cancelar"
+            icon="pi pi-times"
+            severity="secondary"
+            [text]="true"
+            [disabled]="saving()"
+            (click)="cancelarEdicion()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            label="Guardar cambios"
+            icon="pi pi-check"
+            [loading]="saving()"
+            [disabled]="editForm.invalid || saving()"
+            (click)="guardarEdicion()"
+          ></button>
+        </ng-template>
+      </p-dialog>
+
+      <!-- ── Confirm de eliminación ──────────────────────────────────────── -->
+      <p-confirmDialog [style]="{ maxWidth: '420px' }" acceptButtonStyleClass="p-button-danger" />
+
+      <!-- ── Toast de errores ────────────────────────────────────────────── -->
+      <p-toast position="bottom-center" />
     </div>
   `,
   styles: [`
@@ -155,6 +288,12 @@ import {
       border-radius: 12px;
       background: #fff;
       box-shadow: 0 1px 3px rgb(0 0 0 / .06);
+      animation: cardIn 0.2s ease both;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .card-header { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
@@ -181,14 +320,90 @@ import {
       color: #94a3b8;
       margin: 0;
     }
+
+    /* ── Botones de acción ────────────────────────────────────── */
+    .card-actions {
+      display: flex;
+      gap: 0.25rem;
+      justify-content: flex-end;
+      margin-top: 0.875rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    /* ── Formulario de edición (dentro del p-dialog) ──────────── */
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      padding: 0.25rem 0;
+    }
+
+    .edit-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .edit-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .edit-error {
+      font-size: 0.8rem;
+      color: #dc2626;
+    }
+
+    .edit-save-error {
+      font-size: 0.875rem;
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      margin: 0;
+    }
   `],
 })
 export class MisReportesComponent implements OnInit {
   private readonly reporteService = inject(ReporteService);
+  private readonly wsService = inject(ReporteWebSocketService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly messageService = inject(MessageService);
+  private readonly fb = inject(FormBuilder);
 
   readonly reportes = signal<PuntoInteres[]>([]);
   readonly loading = signal(false);
   readonly error = signal(false);
+  readonly editandoReporte = signal<PuntoInteres | null>(null);
+  readonly saving = signal(false);
+  readonly saveError = signal<string | null>(null);
+
+  readonly editForm = this.fb.group({
+    descripcion: [''],
+    estado: [null as EstadoPunto | null, Validators.required],
+  });
+
+  readonly estadoOptions: EstadoOption[] = [
+    { label: 'Activo',   value: 'ACTIVO' },
+    { label: 'Resuelto', value: 'RESUELTO' },
+  ];
+
+  constructor() {
+    this.wsService.reporteUpserted$
+      .pipe(takeUntilDestroyed())
+      .subscribe((p) => {
+        this.reportes.update((list) => list.map((r) => (r.id === p.id ? p : r)));
+      });
+
+    this.wsService.reporteEliminado$
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        this.reportes.update((list) => list.filter((r) => r.id !== id));
+      });
+  }
 
   ngOnInit(): void {
     this.cargar();
@@ -207,6 +422,64 @@ export class MisReportesComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  onEditClick(r: PuntoInteres): void {
+    this.editForm.reset({ descripcion: r.descripcion ?? '', estado: r.estado ?? 'ACTIVO' });
+    this.saveError.set(null);
+    this.editandoReporte.set(r);
+  }
+
+  onDeleteClick(r: PuntoInteres): void {
+    this.confirmationService.confirm({
+      message: `¿Querés eliminar "<strong>${r.titulo}</strong>"? Esta acción no se puede deshacer.`,
+      header: 'Confirmar eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        this.reporteService.deleteReporte(r.id).subscribe({
+          next: () => {
+            this.reportes.update((list) => list.filter((x) => x.id !== r.id));
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'No se pudo eliminar el reporte. Intentá de nuevo.',
+              life: 4000,
+            });
+          },
+        });
+      },
+    });
+  }
+
+  guardarEdicion(): void {
+    const r = this.editandoReporte();
+    if (!r || this.editForm.invalid || this.saving()) return;
+
+    const { descripcion, estado } = this.editForm.getRawValue();
+    this.saving.set(true);
+    this.saveError.set(null);
+
+    this.reporteService.updateReporte(r.id, { descripcion: descripcion ?? '', estado: estado! }).subscribe({
+      next: (updated) => {
+        this.reportes.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
+        this.saving.set(false);
+        this.editandoReporte.set(null);
+      },
+      error: () => {
+        this.saving.set(false);
+        this.saveError.set('No se pudo guardar. Intentá de nuevo.');
+      },
+    });
+  }
+
+  cancelarEdicion(): void {
+    if (!this.editandoReporte()) return;
+    this.editandoReporte.set(null);
+    this.saveError.set(null);
   }
 
   categoriaLabel(r: PuntoInteres): string {

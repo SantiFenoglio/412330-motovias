@@ -231,3 +231,57 @@
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+/* ── Action buttons (edit / delete) ──────────────────────────────────────── */
+
+.popup-actions {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 0.625rem;
+}
+
+.btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: 1.5px solid;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  font-family: inherit;
+  min-height: 2.5rem;
+}
+
+.btn-action:active {
+  transform: scale(0.97);
+}
+
+.btn-action:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.btn-edit {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.btn-edit:hover {
+  background: #dbeafe;
+}
+
+.btn-delete {
+  background: #fff5f5;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-delete:hover {
+  background: #fee2e2;
+}

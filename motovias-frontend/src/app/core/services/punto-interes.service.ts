@@ -22,22 +22,36 @@ export class PuntoInteresService {
 
   private readonly _categoriasActivas = signal<Categoria[]>([...TODAS_LAS_CATEGORIAS]);
   private readonly _nuevosReportes = signal<PuntoInteres[]>([]);
+  private readonly _actualizados = signal<PuntoInteres[]>([]);
+  private readonly _eliminadosIds = signal<Set<number>>(new Set());
 
   readonly categoriasActivas = this._categoriasActivas.asReadonly();
 
   readonly puntosFiltrados = computed(() => {
     const activas = this._categoriasActivas();
-    const todos = [...this._todos(), ...this._nuevosReportes()];
+    const eliminados = this._eliminadosIds();
+    const actualizadosMap = new Map(this._actualizados().map((p) => [p.id, p]));
+    const todos = [...this._todos(), ...this._nuevosReportes()]
+      .filter((p) => !eliminados.has(p.id))
+      .map((p) => actualizadosMap.get(p.id) ?? p);
     return todos.filter((p) => activas.includes(p.categoria));
   });
 
-  agregarNuevoReporte(punto: PuntoInteres): void {
-    this._nuevosReportes.update((list) => {
-      const yaExiste =
-        list.some((p) => p.id === punto.id) ||
-        this._todos().some((p) => p.id === punto.id);
-      return yaExiste ? list : [...list, punto];
-    });
+  upsertReporte(punto: PuntoInteres): void {
+    const existeEnTodos = this._todos().some((p) => p.id === punto.id);
+    const existeEnNuevos = this._nuevosReportes().some((p) => p.id === punto.id);
+
+    if (existeEnTodos || existeEnNuevos) {
+      this._actualizados.update((list) => [...list.filter((p) => p.id !== punto.id), punto]);
+    } else {
+      this._nuevosReportes.update((list) => [...list, punto]);
+    }
+  }
+
+  eliminarReporte(id: number): void {
+    this._eliminadosIds.update((set) => new Set([...set, id]));
+    this._nuevosReportes.update((list) => list.filter((p) => p.id !== id));
+    this._actualizados.update((list) => list.filter((p) => p.id !== id));
   }
 
   toggleCategoria(cat: Categoria): void {

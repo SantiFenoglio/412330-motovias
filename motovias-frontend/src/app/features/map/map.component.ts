@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   effect,
   ElementRef,
@@ -12,12 +13,21 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import * as L from 'leaflet';
-import { PuntoInteresService } from '../../core/services/punto-interes.service';
-import { ReporteWebSocketService } from '../../core/services/reporte-websocket.service';
-import { Categoria, PuntoInteres } from '../../core/models/punto-interes.model';
+import { ConfirmationService, MessageService, PrimeTemplate } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { Dialog } from 'primeng/dialog';
+import { Select } from 'primeng/select';
+import { TextareaModule } from 'primeng/textarea';
+import { Toast } from 'primeng/toast';
+import { AuthService } from '../../core/services/auth.service';
 import { GeolocationService, UserCoords } from '../../core/services/geolocation.service';
-import { Button } from 'primeng/button';
+import { PuntoInteresService } from '../../core/services/punto-interes.service';
+import { ReporteService } from '../../core/services/reporte.service';
+import { ReporteWebSocketService } from '../../core/services/reporte-websocket.service';
+import { Categoria, EstadoPunto, PuntoInteres } from '../../core/models/punto-interes.model';
 import { FilterPanelComponent } from './filter-panel/filter-panel.component';
 import { ReportePopupComponent } from './reporte-popup/reporte-popup.component';
 import { ReporteFormComponent } from './reporte-form/reporte-form.component';
@@ -65,10 +75,28 @@ const CATEGORY_LABEL: Record<Categoria, string> = {
 
 const ARGENTINA_CENTER: [number, number] = [-34.6, -64.1];
 
+interface EstadoOption {
+  label: string;
+  value: EstadoPunto;
+}
+
 @Component({
   selector: 'app-map',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Button, FilterPanelComponent, ReportePopupComponent, ReporteFormComponent],
+  providers: [ConfirmationService, MessageService],
+  imports: [
+    ReactiveFormsModule,
+    ButtonModule,
+    FilterPanelComponent,
+    ReportePopupComponent,
+    ReporteFormComponent,
+    Dialog,
+    ConfirmDialog,
+    Toast,
+    Select,
+    TextareaModule,
+    PrimeTemplate,
+  ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
 })
@@ -80,6 +108,11 @@ export class MapComponent implements OnDestroy {
   private readonly geolocationService = inject(GeolocationService);
   readonly puntoInteresService = inject(PuntoInteresService);
   private readonly wsService = inject(ReporteWebSocketService);
+  private readonly authService = inject(AuthService);
+  private readonly reporteService = inject(ReporteService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly messageService = inject(MessageService);
+  private readonly fb = inject(FormBuilder);
 
   private map: L.Map | undefined;
   private readonly leafletMarkers = new Map<number, L.Marker>();
@@ -87,6 +120,29 @@ export class MapComponent implements OnDestroy {
 
   readonly selectedPunto = signal<PuntoInteres | null>(null);
   readonly showReporteForm = signal(false);
+  readonly editandoPunto = signal<PuntoInteres | null>(null);
+  readonly saving = signal(false);
+  readonly saveError = signal<string | null>(null);
+
+  readonly editForm = this.fb.group({
+    descripcion: [''],
+    estado: [null as EstadoPunto | null, Validators.required],
+  });
+
+  readonly estadoOptions: EstadoOption[] = [
+    { label: 'Activo',   value: 'ACTIVO' },
+    { label: 'Resuelto', value: 'RESUELTO' },
+  ];
+
+  readonly esOwner = computed(() => {
+    const user = this.authService.currentUser();
+    const punto = this.selectedPunto();
+    return !!user && !!punto?.emailUsuario && punto.emailUsuario === user.email;
+  });
+
+  readonly esAdmin = computed(() =>
+    this.authService.currentUser()?.roles.includes('ROLE_ADMIN') ?? false,
+  );
 
   constructor() {
     effect(() => {
@@ -103,9 +159,38 @@ export class MapComponent implements OnDestroy {
       });
     });
 
-    this.wsService.nuevosReportes$
+    // Canal /topic/reportes: tanto nuevos como editados
+    this.wsService.reporteUpserted$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((reporte) => this.puntoInteresService.agregarNuevoReporte(reporte));
+      .subscribe((reporte) => {
+        this.puntoInteresService.upsertReporte(reporte);
+        if (this.leafletMarkers.has(reporte.id)) {
+          this.zone.runOutsideAngular(() => this.actualizarMarcadorEnMapa(reporte));
+        }
+        if (this.selectedPunto()?.id === reporte.id) {
+          this.selectedPunto.set(reporte);
+        }
+      });
+
+    // Canal /topic/reportes/eliminar
+    this.wsService.reporteEliminado$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((id) => {
+        this.zone.runOutsideAngular(() => {
+          const marker = this.leafletMarkers.get(id);
+          if (marker) {
+            marker.remove();
+            this.leafletMarkers.delete(id);
+          }
+        });
+        this.puntoInteresService.eliminarReporte(id);
+        if (this.selectedPunto()?.id === id) {
+          this.selectedPunto.set(null);
+        }
+        if (this.editandoPunto()?.id === id) {
+          this.editandoPunto.set(null);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -116,6 +201,71 @@ export class MapComponent implements OnDestroy {
   recenter(): void {
     if (!this.map) return;
     this.centerOnUser();
+  }
+
+  onEditClicked(): void {
+    const p = this.selectedPunto();
+    if (!p) return;
+    this.selectedPunto.set(null);
+    this.editForm.reset({ descripcion: p.descripcion ?? '', estado: p.estado ?? 'ACTIVO' });
+    this.saveError.set(null);
+    this.editandoPunto.set(p);
+  }
+
+  onDeleteClicked(): void {
+    const p = this.selectedPunto();
+    if (!p) return;
+    this.selectedPunto.set(null);
+
+    this.confirmationService.confirm({
+      message: `¿Querés eliminar "<strong>${p.titulo}</strong>"? Esta acción no se puede deshacer.`,
+      header: 'Confirmar eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        this.reporteService.deleteReporte(p.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            error: () => {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo eliminar el reporte. Intentá de nuevo.',
+                life: 4000,
+              });
+            },
+          });
+      },
+    });
+  }
+
+  guardarEdicion(): void {
+    const p = this.editandoPunto();
+    if (!p || this.editForm.invalid || this.saving()) return;
+
+    const { descripcion, estado } = this.editForm.getRawValue();
+    this.saving.set(true);
+    this.saveError.set(null);
+
+    this.reporteService.updateReporte(p.id, { descripcion: descripcion ?? '', estado: estado! })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.editandoPunto.set(null);
+        },
+        error: () => {
+          this.saving.set(false);
+          this.saveError.set('No se pudo guardar. Intentá de nuevo.');
+        },
+      });
+  }
+
+  cancelarEdicion(): void {
+    if (!this.editandoPunto()) return;
+    this.editandoPunto.set(null);
+    this.saveError.set(null);
   }
 
   private initMap(): void {
@@ -168,6 +318,39 @@ export class MapComponent implements OnDestroy {
     return L.marker([coords.lat, coords.lng], { icon, zIndexOffset: 1000 });
   }
 
+  private crearIcono(punto: PuntoInteres): L.DivIcon {
+    const color = CATEGORY_COLOR[punto.categoria];
+    const label = CATEGORY_LABEL[punto.categoria];
+    const svg = CATEGORY_SVG[punto.categoria];
+    const resoltoClass = punto.estado === 'RESUELTO' ? ' moto-pin--resuelto' : '';
+    return L.divIcon({
+      className: '',
+      html: `<div class="moto-pin${resoltoClass}" style="background:${color}" role="img" aria-label="${label}">
+               ${svg}
+             </div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+    });
+  }
+
+  private crearMarcador(punto: PuntoInteres): L.Marker {
+    const marker = L.marker([punto.latitud, punto.longitud], { icon: this.crearIcono(punto) });
+    marker.on('click', () => {
+      this.zone.run(() => this.selectedPunto.set(punto));
+    });
+    return marker;
+  }
+
+  private actualizarMarcadorEnMapa(punto: PuntoInteres): void {
+    const marker = this.leafletMarkers.get(punto.id);
+    if (!marker) return;
+    marker.setIcon(this.crearIcono(punto));
+    marker.off('click');
+    marker.on('click', () => {
+      this.zone.run(() => this.selectedPunto.set(punto));
+    });
+  }
+
   private sincronizarMarcadores(filtrados: PuntoInteres[]): void {
     const filtradosIds = new Set(filtrados.map((p) => p.id));
 
@@ -185,26 +368,5 @@ export class MapComponent implements OnDestroy {
         this.leafletMarkers.set(punto.id, marker);
       }
     }
-  }
-
-  private crearMarcador(punto: PuntoInteres): L.Marker {
-    const color = CATEGORY_COLOR[punto.categoria];
-    const label = CATEGORY_LABEL[punto.categoria];
-    const svg = CATEGORY_SVG[punto.categoria];
-
-    const icon = L.divIcon({
-      className: '',
-      html: `<div class="moto-pin" style="background:${color}" role="img" aria-label="${label}">
-               ${svg}
-             </div>`,
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-    });
-
-    const marker = L.marker([punto.latitud, punto.longitud], { icon });
-    marker.on('click', () => {
-      this.zone.run(() => this.selectedPunto.set(punto));
-    });
-    return marker;
   }
 }

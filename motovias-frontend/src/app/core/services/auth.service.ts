@@ -22,6 +22,7 @@ export interface AuthResponse {
 export interface UserInfo {
   email: string;
   nombre: string;
+  roles: string[];
 }
 
 const TOKEN_KEY = 'auth_token';
@@ -78,6 +79,7 @@ export class AuthService {
       return {
         email: payload['sub'] ?? payload['email'] ?? '',
         nombre: payload['nombre'] ?? payload['name'] ?? payload['sub'] ?? '',
+        roles: payload['roles'] ?? payload['authorities'] ?? [],
       };
     } catch {
       return null;

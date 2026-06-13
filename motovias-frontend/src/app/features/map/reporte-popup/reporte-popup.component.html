@@ -72,6 +72,19 @@
           Ver detalle
           <i class="pi pi-arrow-right" aria-hidden="true"></i>
         </button>
+
+        @if (puedeEditar()) {
+          <div class="popup-actions" role="group" aria-label="Acciones del reporte">
+            <button class="btn-action btn-edit" type="button" (click)="onEdit()">
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+              Editar
+            </button>
+            <button class="btn-action btn-delete" type="button" (click)="onDelete()">
+              <i class="pi pi-trash" aria-hidden="true"></i>
+              Eliminar
+            </button>
+          </div>
+        }
       </footer>
     </article>
   </div>

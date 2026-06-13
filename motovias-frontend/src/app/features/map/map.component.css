@@ -38,3 +38,39 @@
   gap: 0.6rem;
   align-items: center;
 }
+
+/* ── Formulario de edición (dentro del p-dialog) ────────────────────────── */
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.25rem 0;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.edit-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.edit-error {
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
+.edit-save-error {
+  font-size: 0.875rem;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+}

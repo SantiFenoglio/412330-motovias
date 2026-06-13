@@ -10,9 +10,12 @@ const WS_URL = 'http://localhost:8080/ws';
 export class ReporteWebSocketService implements OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly client: Client;
-  private readonly subject = new Subject<PuntoInteres>();
 
-  readonly nuevosReportes$: Observable<PuntoInteres> = this.subject.asObservable();
+  private readonly upsertSubject = new Subject<PuntoInteres>();
+  private readonly deleteSubject = new Subject<number>();
+
+  readonly reporteUpserted$: Observable<PuntoInteres> = this.upsertSubject.asObservable();
+  readonly reporteEliminado$: Observable<number> = this.deleteSubject.asObservable();
 
   constructor() {
     this.client = new Client({
@@ -22,9 +25,16 @@ export class ReporteWebSocketService implements OnDestroy {
         this.client.subscribe('/topic/reportes', (message) => {
           try {
             const reporte = JSON.parse(message.body) as PuntoInteres;
-            this.zone.run(() => this.subject.next(reporte));
+            this.zone.run(() => this.upsertSubject.next(reporte));
           } catch {
             // ignore malformed messages
+          }
+        });
+
+        this.client.subscribe('/topic/reportes/eliminar', (message) => {
+          const id = parseInt(message.body, 10);
+          if (!isNaN(id)) {
+            this.zone.run(() => this.deleteSubject.next(id));
           }
         });
       },

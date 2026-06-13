@@ -26,7 +26,11 @@ import {
 })
 export class ReportePopupComponent {
   readonly punto = input<PuntoInteres | null>(null);
+  readonly esOwner = input(false);
+  readonly esAdmin = input(false);
   readonly closed = output<void>();
+  readonly editClicked = output<void>();
+  readonly deleteClicked = output<void>();
 
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
@@ -42,12 +46,13 @@ export class ReportePopupComponent {
     return p?.estado ? ESTADO_CONFIG[p.estado] : null;
   });
 
+  protected readonly puedeEditar = computed(() => this.esOwner() || this.esAdmin());
+
   constructor() {
     effect((onCleanup) => {
       const punto = this.punto();
       if (!punto) return;
 
-      // Foco en el botón de cierre al abrir el diálogo (WCAG 2.1 – 2.4.3)
       Promise.resolve().then(() => this.closeBtnRef()?.nativeElement.focus());
 
       const handler = (e: KeyboardEvent) => {
@@ -71,5 +76,13 @@ export class ReportePopupComponent {
   verDetalle(): void {
     const p = this.punto();
     if (p) this.router.navigate(['/reporte', p.id]);
+  }
+
+  onEdit(): void {
+    this.editClicked.emit();
+  }
+
+  onDelete(): void {
+    this.deleteClicked.emit();
   }
 }
