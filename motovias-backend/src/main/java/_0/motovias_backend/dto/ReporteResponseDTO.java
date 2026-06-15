@@ -2,6 +2,7 @@ package _0.motovias_backend.dto;
 
 import _0.motovias_backend.model.Categoria;
 import _0.motovias_backend.model.EstadoPunto;
+import _0.motovias_backend.model.FuenteUbicacion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,4 +25,5 @@ public class ReporteResponseDTO {
     private String nombreUsuario;
     private long confirmaciones;
     private long refutaciones;
+    private FuenteUbicacion fuenteUbicacion;
 }

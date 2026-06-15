@@ -37,6 +37,11 @@ public class PuntoInteres {
     @Column(nullable = false, columnDefinition = "varchar(255) default 'ACTIVO'")
     private EstadoPunto estado = EstadoPunto.ACTIVO;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "fuente_ubicacion", nullable = false, columnDefinition = "varchar(255) default 'GPS'")
+    private FuenteUbicacion fuenteUbicacion = FuenteUbicacion.GPS;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

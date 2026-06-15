@@ -5,6 +5,7 @@ import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.ReporteUpdateDTO;
 import _0.motovias_backend.dto.VotoRequestDTO;
 import _0.motovias_backend.model.EstadoPunto;
+import _0.motovias_backend.model.FuenteUbicacion;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.ReporteVoto;
 import _0.motovias_backend.model.Role;
@@ -49,11 +50,14 @@ public class ReporteService {
     public ReporteResponseDTO crear(ReporteRequestDTO dto, User usuario) {
         Point ubicacion = GF.createPoint(new Coordinate(dto.getLongitud(), dto.getLatitud()));
 
+        FuenteUbicacion fuente = dto.getFuenteUbicacion() != null ? dto.getFuenteUbicacion() : FuenteUbicacion.GPS;
+
         PuntoInteres entidad = PuntoInteres.builder()
                 .titulo(dto.getTitulo())
                 .descripcion(dto.getDescripcion())
                 .categoria(dto.getCategoria())
                 .ubicacion(ubicacion)
+                .fuenteUbicacion(fuente)
                 .usuario(usuario)
                 .build();
 
@@ -158,6 +162,7 @@ public class ReporteService {
                 .longitud(p.getUbicacion().getX())
                 .emailUsuario(p.getUsuario() != null ? p.getUsuario().getEmail() : null)
                 .nombreUsuario(nombreUsuario)
+                .fuenteUbicacion(p.getFuenteUbicacion())
                 .build();
     }
 }

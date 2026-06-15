@@ -8,8 +8,20 @@
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '480px', maxWidth: '95vw' }"
+  [contentStyle]="{ 'max-height': '80vh', 'overflow-y': 'auto' }"
   aria-labelledby="reporte-dialog-title"
 >
+  <!-- Badge dinámico de fuente de ubicación -->
+  @if (gpsState() !== 'idle') {
+    <div class="ubicacion-badge-wrapper" role="status" aria-live="polite">
+      @if (fuenteUbicacion() === 'GPS') {
+        <p-badge value="📍 Ubicación por GPS" severity="success" />
+      } @else {
+        <p-badge value="✍️ Ubicación Manual" severity="warn" />
+      }
+    </div>
+  }
+
   <!-- Estado GPS -->
   @if (gpsState() === 'loading') {
     <p-message
@@ -18,17 +30,17 @@
       styleClass="gps-message"
     />
   }
-  @if (gpsState() === 'error') {
-    <p-message
-      severity="warn"
-      text="No se pudo obtener la ubicación. El reporte no puede enviarse sin coordenadas."
-      styleClass="gps-message"
-    />
-  }
   @if (gpsState() === 'success') {
     <p-message
       severity="success"
       text="Ubicación capturada correctamente."
+      styleClass="gps-message"
+    />
+  }
+  @if (gpsState() === 'error') {
+    <p-message
+      severity="warn"
+      text="GPS no disponible. Buscá una dirección o hacé click en el mapa para ubicar tu reporte."
       styleClass="gps-message"
     />
   }
@@ -117,6 +129,83 @@
       </div>
     </div>
 
+    <!-- Sección de ubicación manual (fallback de GPS) -->
+    @if (fuenteUbicacion() === 'MANUAL') {
+      <div class="manual-location-section">
+
+        <!-- Buscador de dirección con debounce reactivo -->
+        <div class="form-field">
+          <label for="address-search" class="address-search-label">
+            Buscar dirección
+          </label>
+          <div class="address-search-wrapper">
+            <input
+              id="address-search"
+              type="search"
+              pInputText
+              [value]="searchValue()"
+              (input)="onSearchInput($event)"
+              placeholder="Ej: Av. Colón 4000, Córdoba"
+              aria-label="Buscar dirección en el mapa"
+              [attr.aria-expanded]="geocodingResults().length > 0"
+              aria-autocomplete="list"
+              aria-controls="geocoding-suggestions"
+              aria-haspopup="listbox"
+              autocomplete="off"
+              class="address-search-input"
+            />
+            @if (geocodingLoading()) {
+              <span class="search-spinner" role="status" aria-label="Buscando dirección…">
+                <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+              </span>
+            }
+          </div>
+
+          @if (geocodingResults().length > 0) {
+            <ul
+              id="geocoding-suggestions"
+              class="geocoding-suggestions"
+              role="listbox"
+              aria-label="Sugerencias de dirección"
+            >
+              @for (result of geocodingResults(); track result.display_name) {
+                <li
+                  role="option"
+                  aria-selected="false"
+                  class="geocoding-suggestion-item"
+                  tabindex="0"
+                  (click)="onResultSelect(result)"
+                  (keydown.enter)="onResultSelect(result)"
+                  (keydown.space)="$event.preventDefault(); onResultSelect(result)"
+                >
+                  {{ result.display_name }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <!-- Mini-mapa Leaflet con click y marcador arrastrable -->
+        <p class="mini-map-hint" aria-hidden="true">
+          <i class="pi pi-map-marker"></i>
+          Hacé click en el mapa o arrastrá el pin para ajustar la ubicación
+        </p>
+        <div
+          #miniMapContainer
+          class="mini-map-container"
+          role="region"
+          aria-label="Mapa para selección manual de ubicación. Hacé click para colocar el marcador."
+        ></div>
+
+        @if (locationSelected()) {
+          <p class="location-confirmed" role="status" aria-live="polite">
+            <i class="pi pi-check-circle" aria-hidden="true"></i>
+            Ubicación seleccionada correctamente
+          </p>
+        }
+      </div>
+    }
+
     <!-- Acciones -->
     <div class="form-actions">
       <p-button
@@ -132,7 +221,7 @@
         icon="pi pi-send"
         iconPos="right"
         [loading]="submitting()"
-        [disabled]="form.invalid || gpsState() !== 'success'"
+        [disabled]="submitDisabled"
       />
     </div>
   </form>

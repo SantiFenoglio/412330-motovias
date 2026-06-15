@@ -1,6 +1,7 @@
 package _0.motovias_backend.dto;
 
 import _0.motovias_backend.model.Categoria;
+import _0.motovias_backend.model.FuenteUbicacion;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -27,4 +28,6 @@ public class ReporteRequestDTO {
     @DecimalMin(value = "-180.0", message = "La longitud debe estar entre -180 y 180")
     @DecimalMax(value = "180.0",  message = "La longitud debe estar entre -180 y 180")
     private Double longitud;
+
+    private FuenteUbicacion fuenteUbicacion;
 }

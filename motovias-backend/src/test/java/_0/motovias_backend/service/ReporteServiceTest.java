@@ -5,6 +5,7 @@ import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.ReporteUpdateDTO;
 import _0.motovias_backend.model.Categoria;
 import _0.motovias_backend.model.EstadoPunto;
+import _0.motovias_backend.model.FuenteUbicacion;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.Role;
 import _0.motovias_backend.model.User;
@@ -95,6 +96,7 @@ class ReporteServiceTest {
         assertThat(resultado.getEmailUsuario()).isEqualTo("rider@motovias.com");
         assertThat(resultado.getNombreUsuario()).isEqualTo("Juan Perez");
         assertThat(resultado.getFechaCreacion()).isNotNull();
+        assertThat(resultado.getFuenteUbicacion()).isEqualTo(FuenteUbicacion.GPS);
 
         verify(repository).save(any(PuntoInteres.class));
     }
@@ -141,6 +143,43 @@ class ReporteServiceTest {
 
         assertThat(dto.getEmailUsuario()).isNull();
         assertThat(dto.getNombreUsuario()).isNull();
+    }
+
+    // ── Tests de fuenteUbicacion (US-27) ────────────────────────────────────
+
+    @Test
+    @DisplayName("crear persiste fuenteUbicacion MANUAL cuando se envía en el DTO")
+    void crear_persisteFuenteUbicacionManual() {
+        when(repository.save(any(PuntoInteres.class))).thenAnswer(inv -> {
+            PuntoInteres p = inv.getArgument(0);
+            assertThat(p.getFuenteUbicacion()).isEqualTo(FuenteUbicacion.MANUAL);
+            p.setId(99L);
+            return p;
+        });
+
+        ReporteRequestDTO dto = reporteDTO("Ubicación manual", null, Categoria.PUNTO_INTERES, LAT, LON);
+        dto.setFuenteUbicacion(FuenteUbicacion.MANUAL);
+
+        ReporteResponseDTO resultado = service.crear(dto, usuario);
+
+        assertThat(resultado.getFuenteUbicacion()).isEqualTo(FuenteUbicacion.MANUAL);
+    }
+
+    @Test
+    @DisplayName("crear usa GPS como fuente por defecto cuando fuenteUbicacion no se envía")
+    void crear_usaGpsPorDefectoCuandoFuenteEsNula() {
+        when(repository.save(any(PuntoInteres.class))).thenAnswer(inv -> {
+            PuntoInteres p = inv.getArgument(0);
+            assertThat(p.getFuenteUbicacion()).isEqualTo(FuenteUbicacion.GPS);
+            p.setId(100L);
+            return p;
+        });
+
+        ReporteRequestDTO dto = reporteDTO("Sin fuente", null, Categoria.GOMERIA, LAT, LON);
+
+        ReporteResponseDTO resultado = service.crear(dto, usuario);
+
+        assertThat(resultado.getFuenteUbicacion()).isEqualTo(FuenteUbicacion.GPS);
     }
 
     // ── Tests de seguridad (US-25) ───────────────────────────────────────────
@@ -263,6 +302,7 @@ class ReporteServiceTest {
                 .descripcion("Atiende 24hs")
                 .categoria(cat)
                 .estado(estado)
+                .fuenteUbicacion(FuenteUbicacion.GPS)
                 .ubicacion(GF.createPoint(new Coordinate(LON, LAT)))
                 .fechaCreacion(LocalDateTime.of(2026, 6, 11, 12, 0))
                 .build();

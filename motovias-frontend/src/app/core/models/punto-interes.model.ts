@@ -52,10 +52,13 @@ export interface PuntoInteres {
   refutaciones?: number;
 }
 
+export type FuenteUbicacion = 'GPS' | 'MANUAL';
+
 export interface PuntoInteresRequest {
   titulo: string;
   descripcion: string;
   latitud: number;
   longitud: number;
   categoria: Categoria;
+  fuenteUbicacion: FuenteUbicacion;
 }

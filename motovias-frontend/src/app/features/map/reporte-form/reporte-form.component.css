@@ -11,13 +11,11 @@
   gap: 0.25rem;
 }
 
-/* Ensure p-floatlabel fills the field */
 .form-field p-floatlabel,
 .form-field :deep(p-floatlabel) {
   width: 100%;
 }
 
-/* Full-width inputs */
 .form-field input[pInputText],
 .form-field textarea[pTextarea] {
   width: 100%;
@@ -44,7 +42,119 @@
   margin-bottom: 0.5rem;
 }
 
-/* Full-width select inside floatlabel */
 :deep(.w-full .p-select) {
   width: 100%;
+}
+
+/* Badge de fuente de ubicación */
+.ubicacion-badge-wrapper {
+  display: flex;
+  margin-bottom: 0.75rem;
+}
+
+:deep(.ubicacion-badge-wrapper .p-badge) {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.85rem;
+  height: auto;
+  line-height: 1.5;
+  border-radius: 1rem;
+  white-space: nowrap;
+}
+
+/* Sección de ubicación manual */
+.manual-location-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 1px solid var(--p-surface-200);
+  padding-top: 1rem;
+}
+
+/* Buscador de dirección */
+.address-search-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--p-text-color);
+  margin-bottom: 0.25rem;
+}
+
+.address-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.address-search-input {
+  width: 100%;
+  padding-right: 2.25rem;
+}
+
+.search-spinner {
+  position: absolute;
+  right: 0.65rem;
+  color: var(--p-text-muted-color);
+  pointer-events: none;
+}
+
+/* Lista de sugerencias de geocodificación */
+.geocoding-suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--p-surface-300);
+  border-radius: var(--p-border-radius);
+  background: var(--p-surface-0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.geocoding-suggestion-item {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--p-surface-100);
+  color: var(--p-text-color);
+  line-height: 1.4;
+  outline: none;
+}
+
+.geocoding-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.geocoding-suggestion-item:hover,
+.geocoding-suggestion-item:focus {
+  background: var(--p-primary-50);
+  color: var(--p-primary-700);
+}
+
+/* Hint del mapa */
+.mini-map-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Contenedor del mini-mapa Leaflet */
+.mini-map-container {
+  height: 220px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--p-surface-300);
+  overflow: hidden;
+}
+
+/* Confirmación de ubicación seleccionada */
+.location-confirmed {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--p-green-600);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
