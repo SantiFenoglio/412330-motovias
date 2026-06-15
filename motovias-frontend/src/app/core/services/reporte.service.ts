@@ -29,4 +29,8 @@ export class ReporteService {
   deleteReporte(id: number): Observable<void> {
     return this.http.delete<void>(`${BASE_URL}/${id}`);
   }
+
+  votarReporte(id: number, tipoVoto: 'CONFIRMA' | 'REFUTA'): Observable<void> {
+    return this.http.post<void>(`${BASE_URL}/${id}/votar`, { tipoVoto });
+  }
 }

@@ -3,6 +3,7 @@ package _0.motovias_backend.controller;
 import _0.motovias_backend.dto.ReporteRequestDTO;
 import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.ReporteUpdateDTO;
+import _0.motovias_backend.dto.VotoRequestDTO;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.service.ReporteService;
@@ -60,6 +61,20 @@ public class ReporteController {
             @Valid @RequestBody ReporteUpdateDTO dto
     ) {
         ReporteResponseDTO actualizado = service.editar(id, dto);
+        messagingTemplate.convertAndSend("/topic/reportes", actualizado);
+        return ResponseEntity.ok(actualizado);
+    }
+
+    @PostMapping("/{id}/votar")
+    public ResponseEntity<ReporteResponseDTO> votar(
+            @PathVariable Long id,
+            @Valid @RequestBody VotoRequestDTO dto,
+            Authentication authentication
+    ) {
+        User usuario = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+        ReporteResponseDTO actualizado = service.votar(id, dto, usuario);
         messagingTemplate.convertAndSend("/topic/reportes", actualizado);
         return ResponseEntity.ok(actualizado);
     }

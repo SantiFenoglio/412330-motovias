@@ -41,9 +41,11 @@
     [punto]="selectedPunto()"
     [esOwner]="esOwner()"
     [esAdmin]="esAdmin()"
+    [puedeVotar]="puedeVotar()"
     (closed)="selectedPunto.set(null)"
     (editClicked)="onEditClicked()"
     (deleteClicked)="onDeleteClicked()"
+    (votoClick)="onVotoClicked($event)"
   />
 
   <!-- Formulario de nuevo reporte -->

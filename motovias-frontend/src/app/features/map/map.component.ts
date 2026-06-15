@@ -73,6 +73,12 @@ const CATEGORY_LABEL: Record<Categoria, string> = {
   PUNTO_INTERES: 'Punto de interés / Parador',
 };
 
+const DUDOSO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+  stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+  <circle cx="12" cy="17" r="0.5" fill="#fff" stroke="#fff"/>
+</svg>`;
+
 const ARGENTINA_CENTER: [number, number] = [-34.6, -64.1];
 
 interface EstadoOption {
@@ -143,6 +149,12 @@ export class MapComponent implements OnDestroy {
   readonly esAdmin = computed(() =>
     this.authService.currentUser()?.roles.includes('ROLE_ADMIN') ?? false,
   );
+
+  readonly puedeVotar = computed(() => {
+    const user = this.authService.currentUser();
+    const punto = this.selectedPunto();
+    return !!user && !!punto && punto.emailUsuario !== user.email;
+  });
 
   constructor() {
     effect(() => {
@@ -268,6 +280,31 @@ export class MapComponent implements OnDestroy {
     this.saveError.set(null);
   }
 
+  onVotoClicked(tipo: 'CONFIRMA' | 'REFUTA'): void {
+    const p = this.selectedPunto();
+    if (!p) return;
+    this.reporteService.votarReporte(p.id, tipo)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Voto registrado',
+            detail: tipo === 'CONFIRMA' ? 'Confirmaste este reporte.' : 'Refutaste este reporte.',
+            life: 2500,
+          });
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo registrar tu voto. Puede que ya hayas votado.',
+            life: 4000,
+          });
+        },
+      });
+  }
+
   private initMap(): void {
     this.map = L.map(this.mapRef().nativeElement, {
       center: ARGENTINA_CENTER,
@@ -319,13 +356,19 @@ export class MapComponent implements OnDestroy {
   }
 
   private crearIcono(punto: PuntoInteres): L.DivIcon {
-    const color = CATEGORY_COLOR[punto.categoria];
-    const label = CATEGORY_LABEL[punto.categoria];
-    const svg = CATEGORY_SVG[punto.categoria];
+    const isDudoso = punto.estado === 'DUDOSO';
+    const color = isDudoso ? '#94a3b8' : CATEGORY_COLOR[punto.categoria];
+    const label = isDudoso ? 'Reporte dudoso — información en disputa' : CATEGORY_LABEL[punto.categoria];
+    const svg = isDudoso ? DUDOSO_SVG : CATEGORY_SVG[punto.categoria];
+    const extraStyle = isDudoso
+      ? 'opacity:0.55;'
+      : punto.estado === 'RESUELTO'
+        ? ''
+        : '';
     const resoltoClass = punto.estado === 'RESUELTO' ? ' moto-pin--resuelto' : '';
     return L.divIcon({
       className: '',
-      html: `<div class="moto-pin${resoltoClass}" style="background:${color}" role="img" aria-label="${label}">
+      html: `<div class="moto-pin${resoltoClass}" style="background:${color};${extraStyle}" role="img" aria-label="${label}">
                ${svg}
              </div>`,
       iconSize: [40, 40],

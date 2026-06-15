@@ -28,9 +28,11 @@ export class ReportePopupComponent {
   readonly punto = input<PuntoInteres | null>(null);
   readonly esOwner = input(false);
   readonly esAdmin = input(false);
+  readonly puedeVotar = input(false);
   readonly closed = output<void>();
   readonly editClicked = output<void>();
   readonly deleteClicked = output<void>();
+  readonly votoClick = output<'CONFIRMA' | 'REFUTA'>();
 
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
@@ -84,5 +86,9 @@ export class ReportePopupComponent {
 
   onDelete(): void {
     this.deleteClicked.emit();
+  }
+
+  onVotar(tipo: 'CONFIRMA' | 'REFUTA'): void {
+    this.votoClick.emit(tipo);
   }
 }

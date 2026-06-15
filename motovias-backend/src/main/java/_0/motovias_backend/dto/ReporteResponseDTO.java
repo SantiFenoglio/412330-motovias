@@ -22,4 +22,6 @@ public class ReporteResponseDTO {
     private String fechaCreacion;
     private String emailUsuario;
     private String nombreUsuario;
+    private long confirmaciones;
+    private long refutaciones;
 }

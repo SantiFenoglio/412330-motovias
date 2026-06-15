@@ -65,6 +65,17 @@
             </div>
           }
         </dl>
+
+        <div
+          class="votos-bar"
+          [attr.aria-label]="'Validación comunitaria: ' + (punto()!.confirmaciones ?? 0) + ' confirmaciones, ' + (punto()!.refutaciones ?? 0) + ' refutaciones'"
+        >
+          <i class="pi pi-thumbs-up voto-confirma-icon" aria-hidden="true"></i>
+          <span class="voto-confirma">{{ punto()!.confirmaciones ?? 0 }}</span>
+          <span class="voto-sep" aria-hidden="true">|</span>
+          <i class="pi pi-thumbs-down voto-refuta-icon" aria-hidden="true"></i>
+          <span class="voto-refuta">{{ punto()!.refutaciones ?? 0 }}</span>
+        </div>
       </div>
 
       <footer class="popup-footer">
@@ -72,6 +83,19 @@
           Ver detalle
           <i class="pi pi-arrow-right" aria-hidden="true"></i>
         </button>
+
+        @if (puedeVotar()) {
+          <div class="votos-acciones" role="group" aria-label="Validar este reporte">
+            <button class="btn-action btn-vote-confirma" type="button" (click)="onVotar('CONFIRMA')">
+              <i class="pi pi-thumbs-up" aria-hidden="true"></i>
+              +1 Confirmar
+            </button>
+            <button class="btn-action btn-vote-refuta" type="button" (click)="onVotar('REFUTA')">
+              <i class="pi pi-thumbs-down" aria-hidden="true"></i>
+              -1 Refutar
+            </button>
+          </div>
+        }
 
         @if (puedeEditar()) {
           <div class="popup-actions" role="group" aria-label="Acciones del reporte">

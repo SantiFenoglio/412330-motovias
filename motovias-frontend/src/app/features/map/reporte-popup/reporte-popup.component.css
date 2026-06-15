@@ -285,3 +285,65 @@
 .btn-delete:hover {
   background: #fee2e2;
 }
+
+.btn-vote-confirma {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.btn-vote-confirma:hover {
+  background: #dcfce7;
+}
+
+.btn-vote-refuta {
+  background: #fff5f5;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-vote-refuta:hover {
+  background: #fee2e2;
+}
+
+/* ── Votos bar ─────────────────────────────────────────────────────────────── */
+
+.votos-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.voto-confirma-icon,
+.voto-confirma {
+  color: #16a34a;
+}
+
+.voto-refuta-icon,
+.voto-refuta {
+  color: #dc2626;
+}
+
+.voto-sep {
+  color: #cbd5e1;
+  margin: 0 0.125rem;
+}
+
+/* ── Vote action buttons ───────────────────────────────────────────────────── */
+
+.votos-acciones {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 0.625rem;
+}
+
+.votos-acciones button {
+  flex: 1;
+  justify-content: center;
+}

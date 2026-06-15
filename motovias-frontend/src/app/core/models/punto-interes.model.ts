@@ -48,6 +48,8 @@ export interface PuntoInteres {
   fechaCreacion?: string;
   emailUsuario?: string;
   nombreUsuario?: string;
+  confirmaciones?: number;
+  refutaciones?: number;
 }
 
 export interface PuntoInteresRequest {
