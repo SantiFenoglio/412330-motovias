@@ -11,6 +11,7 @@ import _0.motovias_backend.model.Role;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import _0.motovias_backend.repository.UserRepository;
+import _0.motovias_backend.service.NotificacionService;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ class ReporteServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private NotificacionService notificacionService;
 
     @InjectMocks
     private ReporteService service;

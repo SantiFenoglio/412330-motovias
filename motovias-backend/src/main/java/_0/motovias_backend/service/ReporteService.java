@@ -36,6 +36,7 @@ public class ReporteService {
     private final PuntoInteresRepository repository;
     private final UserRepository userRepository;
     private final ReporteVotoRepository votoRepository;
+    private final NotificacionService notificacionService;
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -73,7 +74,13 @@ public class ReporteService {
         punto.setDescripcion(dto.getDescripcion());
         punto.setEstado(dto.getEstado());
 
-        return toDTO(repository.save(punto));
+        PuntoInteres guardado = repository.save(punto);
+
+        if (EstadoPunto.RESUELTO.equals(dto.getEstado())) {
+            notificacionService.archivarPorReporte(guardado);
+        }
+
+        return toDTO(guardado);
     }
 
     public void eliminar(Long id) {

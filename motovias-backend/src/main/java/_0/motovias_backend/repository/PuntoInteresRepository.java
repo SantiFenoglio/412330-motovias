@@ -1,10 +1,13 @@
 package _0.motovias_backend.repository;
 
+import _0.motovias_backend.model.Categoria;
+import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long> {
@@ -35,4 +38,15 @@ public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long
     );
 
     List<PuntoInteres> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
+
+    @Query("""
+            SELECT p FROM PuntoInteres p LEFT JOIN FETCH p.usuario
+            WHERE p.categoria = :categoria
+              AND p.estado = :estado
+              AND p.fechaCreacion < :limite
+            """)
+    List<PuntoInteres> findAlertasSosVencidas(
+            @Param("categoria") Categoria categoria,
+            @Param("estado") EstadoPunto estado,
+            @Param("limite") LocalDateTime limite);
 }

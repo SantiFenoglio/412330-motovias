@@ -44,6 +44,25 @@
         <span class="user-chip__name">{{ currentUser()!.nombre || currentUser()!.email }}</span>
       </div>
     }
+
+    <!-- Campana de notificaciones -->
+    <button
+      type="button"
+      class="notif-btn"
+      (click)="toggleNotificaciones($event)"
+      [attr.aria-label]="noLeidas() > 0
+        ? 'Notificaciones — ' + noLeidas() + ' sin leer'
+        : 'Notificaciones — ninguna pendiente'"
+      aria-haspopup="true"
+    >
+      <span class="p-overlay-badge">
+        <i class="pi pi-bell" aria-hidden="true"></i>
+        @if (noLeidas() > 0) {
+          <p-badge [value]="noLeidas().toString()" severity="danger" />
+        }
+      </span>
+    </button>
+
     <button
       class="logout-btn"
       type="button"
@@ -56,3 +75,90 @@
   </div>
 
 </nav>
+
+<!-- ── Popover de notificaciones ──────────────────────────────────────────── -->
+<p-popover #notifPanel styleClass="notif-popover">
+  <div class="notif-panel">
+    <div class="notif-panel__header">
+      <span class="notif-panel__title">Notificaciones</span>
+      @if (noLeidas() > 0) {
+        <p-badge [value]="noLeidas().toString()" severity="danger" />
+      }
+    </div>
+
+    @if (notificaciones().length === 0) {
+      <p class="notif-panel__empty">
+        <i class="pi pi-check-circle" aria-hidden="true"></i>
+        Sin notificaciones pendientes.
+      </p>
+    } @else {
+      <ul class="notif-list" role="list">
+        @for (n of notificaciones(); track n.id) {
+          <li class="notif-item">
+            @if (n.reporteTitulo) {
+              <p class="notif-item__titulo">{{ n.reporteTitulo }}</p>
+            }
+            <p class="notif-item__msg">{{ n.mensaje }}</p>
+            <button
+              type="button"
+              class="notif-item__btn"
+              (click)="marcarLeida(n.id)"
+              [attr.aria-label]="'Marcar como leída: ' + (n.reporteTitulo ?? n.mensaje)"
+            >
+              <i class="pi pi-check" aria-hidden="true"></i>
+              Marcar como leída
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</p-popover>
+
+<!-- ── Dialog de interrupción proactiva (RECORDATORIO_CIERRE) ─────────────── -->
+<p-dialog
+  [visible]="dialogNotif() !== null"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', 'max-width': '480px' }"
+  styleClass="notif-dialog"
+  role="alertdialog"
+  aria-live="assertive"
+  [attr.aria-label]="'Alerta sobre el reporte: ' + (dialogNotif()?.reporteTitulo ?? '')"
+>
+  @if (dialogNotif(); as notif) {
+    <ng-template pTemplate="header">
+      <span class="notif-dialog__header-icon" aria-hidden="true">🚨</span>
+      <span class="notif-dialog__header-title">¿Sigue activa tu alerta?</span>
+    </ng-template>
+
+    <p class="notif-dialog__msg">
+      Notamos que creaste el reporte
+      <strong>"{{ notif.reporteTitulo }}"</strong>
+      hace más de 2 horas. Ayudá a la comunidad manteniendo el mapa limpio.
+    </p>
+
+    <ng-template pTemplate="footer">
+      <p-button
+        label="Sí, ya se solucionó"
+        severity="success"
+        icon="pi pi-check"
+        [loading]="resolviendo()"
+        [disabled]="resolviendo()"
+        (onClick)="resolverReporte(notif)"
+      />
+      <p-button
+        label="Sigue activo / Recordarme más tarde"
+        severity="secondary"
+        icon="pi pi-clock"
+        [disabled]="resolviendo()"
+        (onClick)="descartarDialog(notif)"
+      />
+    </ng-template>
+  }
+</p-dialog>
+
+<!-- Toast para feedback de acciones -->
+<p-toast position="bottom-right" />
