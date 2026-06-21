@@ -243,7 +243,7 @@ export class MapComponent implements OnDestroy {
               this.messageService.add({
                 severity: 'error',
                 summary: 'Error',
-                detail: 'No se pudo eliminar el reporte. Intentá de nuevo.',
+                detail: 'No se pudo eliminar la publicación. Intentá de nuevo.',
                 life: 4000,
               });
             },
@@ -290,7 +290,7 @@ export class MapComponent implements OnDestroy {
           this.messageService.add({
             severity: 'success',
             summary: 'Voto registrado',
-            detail: tipo === 'CONFIRMA' ? 'Confirmaste este reporte.' : 'Refutaste este reporte.',
+            detail: tipo === 'CONFIRMA' ? 'Confirmaste este aviso.' : 'Refutaste este aviso.',
             life: 2500,
           });
         },
@@ -358,7 +358,7 @@ export class MapComponent implements OnDestroy {
   private crearIcono(punto: PuntoInteres): L.DivIcon {
     const isDudoso = punto.estado === 'DUDOSO';
     const color = isDudoso ? '#94a3b8' : CATEGORY_COLOR[punto.categoria];
-    const label = isDudoso ? 'Reporte dudoso — información en disputa' : CATEGORY_LABEL[punto.categoria];
+    const label = isDudoso ? 'Aviso dudoso — información en disputa' : CATEGORY_LABEL[punto.categoria];
     const svg = isDudoso ? DUDOSO_SVG : CATEGORY_SVG[punto.categoria];
     const extraStyle = isDudoso
       ? 'opacity:0.55;'

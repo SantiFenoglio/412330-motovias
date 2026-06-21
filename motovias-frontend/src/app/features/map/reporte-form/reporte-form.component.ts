@@ -225,7 +225,7 @@ export class ReporteFormComponent {
       },
       error: () => {
         this.submitting.set(false);
-        this.submitError.set('No se pudo enviar el reporte. Intentá de nuevo.');
+        this.submitError.set('No se pudo publicar el aviso. Intentá de nuevo.');
       },
     });
   }

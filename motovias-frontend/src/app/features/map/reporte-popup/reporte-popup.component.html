@@ -85,7 +85,7 @@
         </button>
 
         @if (puedeVotar()) {
-          <div class="votos-acciones" role="group" aria-label="Validar este reporte">
+          <div class="votos-acciones" role="group" aria-label="Validar esta publicación">
             <button
               class="btn-action btn-vote-confirma"
               type="button"
@@ -110,7 +110,8 @@
         }
 
         @if (puedeEditar()) {
-          <div class="popup-actions" role="group" aria-label="Acciones del reporte">
+          <div class="popup-actions" role="group" aria-label="Acciones de la publicación">
+            <p class="popup-owner-hint">Esta es tu publicación</p>
             <button class="btn-action btn-edit" type="button" (click)="onEdit()">
               <i class="pi pi-pencil" aria-hidden="true"></i>
               Editar

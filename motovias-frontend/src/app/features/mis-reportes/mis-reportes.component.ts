@@ -43,32 +43,32 @@ interface EstadoOption {
       <header class="page-header">
         <h1 class="page-title">
           <i class="pi pi-list" aria-hidden="true"></i>
-          Mis Reportes
+          Gestión de mis Publicaciones
         </h1>
-        <p class="page-subtitle">Historial de puntos de interés que creaste</p>
+        <p class="page-subtitle">Tus avisos y publicaciones en la comunidad</p>
       </header>
 
       @if (loading()) {
         <div class="loading-state" role="status" aria-live="polite">
           <i class="pi pi-spin pi-spinner loading-icon" aria-hidden="true"></i>
-          <p>Cargando tus reportes…</p>
+          <p>Cargando tus publicaciones…</p>
         </div>
       } @else if (error()) {
         <div class="error-state" role="alert">
           <i class="pi pi-exclamation-circle error-icon" aria-hidden="true"></i>
-          <p class="error-title">No se pudieron cargar los reportes</p>
+          <p class="error-title">No se pudieron cargar las publicaciones</p>
           <button class="retry-btn" (click)="cargar()">Reintentar</button>
         </div>
       } @else if (reportes().length === 0) {
         <div class="empty-state" role="status" aria-live="polite">
           <i class="pi pi-inbox empty-icon" aria-hidden="true"></i>
-          <p class="empty-title">Aún no creaste reportes</p>
+          <p class="empty-title">Aún no creaste publicaciones</p>
           <p class="empty-body">
             Los puntos de interés, alertas y talleres que registres aparecerán aquí.
           </p>
         </div>
       } @else {
-        <ul class="reporte-list" aria-label="Mis reportes">
+        <ul class="reporte-list" aria-label="Mis publicaciones">
           @for (r of reportes(); track r.id) {
             <li class="reporte-card">
               <div class="card-header">
@@ -147,7 +147,7 @@ interface EstadoOption {
               [rows]="4"
               [autoResize]="true"
               style="width:100%; overflow:hidden; resize:none"
-              aria-label="Descripción del reporte"
+              aria-label="Descripción de la publicación"
             ></textarea>
           </div>
 
@@ -446,7 +446,7 @@ export class MisReportesComponent implements OnInit {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: 'No se pudo eliminar el reporte. Intentá de nuevo.',
+              detail: 'No se pudo eliminar la publicación. Intentá de nuevo.',
               life: 4000,
             });
           },

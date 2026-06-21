@@ -56,7 +56,7 @@ export class NavbarComponent {
 
   readonly navItems: NavItem[] = [
     { label: 'Mapa',         icon: 'pi pi-map',  route: '/map',          ariaLabel: 'Ir al mapa' },
-    { label: 'Mis Reportes', icon: 'pi pi-list', route: '/mis-reportes', ariaLabel: 'Ver mis reportes' },
+    { label: 'Mis Publicaciones', icon: 'pi pi-list', route: '/mis-reportes', ariaLabel: 'Ver mis publicaciones' },
     { label: 'Perfil',       icon: 'pi pi-user', route: '/perfil',       ariaLabel: 'Ver mi perfil' },
   ];
 
@@ -104,7 +104,7 @@ export class NavbarComponent {
                 this.resolviendo.set(false);
                 this.messageService.add({
                   severity: 'success',
-                  summary: 'Reporte cerrado',
+                  summary: 'Publicación cerrada',
                   detail: 'El mapa de la comunidad se actualizó.',
                   life: 4000,
                 });
@@ -116,7 +116,7 @@ export class NavbarComponent {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: 'No se pudo actualizar el reporte. Intentá de nuevo.',
+              detail: 'No se pudo actualizar la publicación. Intentá de nuevo.',
               life: 4000,
             });
           },
@@ -127,7 +127,7 @@ export class NavbarComponent {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No se pudo cargar el reporte. Intentá de nuevo.',
+          detail: 'No se pudo cargar la publicación. Intentá de nuevo.',
           life: 4000,
         });
       },

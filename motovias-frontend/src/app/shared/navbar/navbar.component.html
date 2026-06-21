@@ -126,7 +126,7 @@
   styleClass="notif-dialog"
   role="alertdialog"
   aria-live="assertive"
-  [attr.aria-label]="'Alerta sobre el reporte: ' + (dialogNotif()?.reporteTitulo ?? '')"
+  [attr.aria-label]="'Alerta sobre la publicación: ' + (dialogNotif()?.reporteTitulo ?? '')"
 >
   @if (dialogNotif(); as notif) {
     <ng-template pTemplate="header">
@@ -135,7 +135,7 @@
     </ng-template>
 
     <p class="notif-dialog__msg">
-      Notamos que creaste el reporte
+      Notamos que creaste la publicación
       <strong>"{{ notif.reporteTitulo }}"</strong>
       hace más de 2 horas. Ayudá a la comunidad manteniendo el mapa limpio.
     </p>

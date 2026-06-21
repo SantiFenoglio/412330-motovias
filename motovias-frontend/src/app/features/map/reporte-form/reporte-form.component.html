@@ -3,7 +3,7 @@
   (visibleChange)="!$event && closed.emit()"
   (onShow)="onDialogShow()"
   (onHide)="onDialogHide()"
-  header="Nuevo reporte"
+  header="Nueva publicación en ruta"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
@@ -40,7 +40,7 @@
   @if (gpsState() === 'error') {
     <p-message
       severity="warn"
-      text="GPS no disponible. Buscá una dirección o hacé click en el mapa para ubicar tu reporte."
+      text="GPS no disponible. Buscá una dirección o hacé click en el mapa para ubicar tu aviso."
       styleClass="gps-message"
     />
   }
@@ -217,7 +217,7 @@
       />
       <p-button
         type="submit"
-        label="Enviar reporte"
+        label="Publicar aviso"
         icon="pi pi-send"
         iconPos="right"
         [loading]="submitting()"
