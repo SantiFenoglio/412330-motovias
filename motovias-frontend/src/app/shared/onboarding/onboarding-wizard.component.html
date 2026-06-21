@@ -1,0 +1,108 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [closeOnEscape]="false"
+  [draggable]="false"
+  [resizable]="false"
+  header="Bienvenido a Motovías"
+  [style]="{ width: '34rem', 'max-width': '95vw' }"
+>
+  <div class="onboarding-content">
+    <p class="step-label" role="status" [attr.aria-label]="'Paso ' + pasoActual() + ' de ' + totalPasos">
+      Paso {{ pasoActual() }} de {{ totalPasos }}
+    </p>
+
+    @if (pasoActual() === 1) {
+      <section class="onboarding-step" aria-labelledby="onboarding-step-1-title">
+        <span class="step-icon" aria-hidden="true">🗺️</span>
+        <h3 id="onboarding-step-1-title" class="step-titulo">El Mapa</h3>
+        <p class="step-descripcion">
+          El mapa muestra <strong>incidentes en ruta en tiempo real</strong> reportados por la comunidad.
+          Cada pin representa un aviso activo: baches, animales sueltos, accidentes, controles policiales y más.
+          Mantente informado antes de salir a rodar.
+        </p>
+      </section>
+    }
+
+    @if (pasoActual() === 2) {
+      <section class="onboarding-step" aria-labelledby="onboarding-step-2-title">
+        <span class="step-icon" aria-hidden="true">👍👎</span>
+        <h3 id="onboarding-step-2-title" class="step-titulo">Votación Colaborativa</h3>
+        <p class="step-descripcion">Cada incidente puede ser validado por la comunidad con dos botones:</p>
+        <ul class="step-lista">
+          <li>
+            <i class="pi pi-thumbs-up" aria-hidden="true"></i>
+            <span><strong>+1 Confirmar:</strong> el incidente sigue vigente en la ruta.</span>
+          </li>
+          <li>
+            <i class="pi pi-thumbs-down" aria-hidden="true"></i>
+            <span><strong>-1 Refutar:</strong> el incidente ya no está o era falso.</span>
+          </li>
+        </ul>
+        <p class="step-descripcion">
+          Si un reporte acumula muchas refutaciones, el mapa lo marcará como
+          <span class="badge-dudoso">DUDOSO</span> para alertar al resto.
+        </p>
+      </section>
+    }
+
+    @if (pasoActual() === 3) {
+      <section class="onboarding-step" aria-labelledby="onboarding-step-3-title">
+        <span class="step-icon" aria-hidden="true">🛡️</span>
+        <h3 id="onboarding-step-3-title" class="step-titulo">Seguridad Vial</h3>
+        <p class="step-descripcion">
+          Antes de salir, completá tu perfil con información de emergencia en <strong>Mi Perfil</strong>:
+        </p>
+        <ul class="step-lista">
+          <li>
+            <i class="pi pi-heart" aria-hidden="true"></i>
+            <span><strong>Tipo de Sangre</strong> — fundamental en caso de accidente.</span>
+          </li>
+          <li>
+            <i class="pi pi-phone" aria-hidden="true"></i>
+            <span><strong>Contacto de Emergencia</strong> — la persona a quien avisar.</span>
+          </li>
+        </ul>
+        <p class="step-descripcion step-urgente">
+          ⚠️ Esta información puede salvar tu vida. No lo dejes para después.
+        </p>
+      </section>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="onboarding-footer">
+      <div class="step-dots" aria-hidden="true">
+        @for (n of [1, 2, 3]; track n) {
+          <span class="step-dot" [class.active]="pasoActual() === n"></span>
+        }
+      </div>
+      <div class="step-nav">
+        @if (pasoActual() > 1) {
+          <p-button
+            label="Anterior"
+            severity="secondary"
+            [text]="true"
+            (onClick)="anterior()"
+          />
+        }
+        @if (pasoActual() < totalPasos) {
+          <p-button
+            label="Siguiente"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (onClick)="siguiente()"
+          />
+        }
+        @if (pasoActual() === totalPasos) {
+          <p-button
+            label="¡Entendido, a la ruta!"
+            icon="pi pi-check"
+            (onClick)="finalizar()"
+          />
+        }
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

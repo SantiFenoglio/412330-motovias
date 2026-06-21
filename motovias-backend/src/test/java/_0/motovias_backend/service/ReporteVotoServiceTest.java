@@ -6,6 +6,7 @@ import _0.motovias_backend.model.*;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import _0.motovias_backend.repository.ReporteVotoRepository;
 import _0.motovias_backend.repository.UserRepository;
+import _0.motovias_backend.service.NotificacionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class ReporteVotoServiceTest {
 
     @Mock
     private ReporteVotoRepository votoRepository;
+
+    @Mock
+    private NotificacionService notificacionService;
 
     @InjectMocks
     private ReporteService service;

@@ -10,6 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { DOCUMENT, DatePipe } from '@angular/common';
+import { Tooltip } from 'primeng/tooltip';
 import { Router } from '@angular/router';
 import {
   CATEGORY_CONFIG,
@@ -20,7 +21,7 @@ import {
 @Component({
   selector: 'app-reporte-popup',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe],
+  imports: [DatePipe, Tooltip],
   templateUrl: './reporte-popup.component.html',
   styleUrl: './reporte-popup.component.css',
 })
