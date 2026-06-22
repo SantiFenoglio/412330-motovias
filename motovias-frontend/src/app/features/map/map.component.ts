@@ -24,10 +24,12 @@ import { TextareaModule } from 'primeng/textarea';
 import { Toast } from 'primeng/toast';
 import { AuthService } from '../../core/services/auth.service';
 import { GeolocationService, UserCoords } from '../../core/services/geolocation.service';
+import { LocationSharingService } from '../../core/services/location-sharing.service';
 import { PuntoInteresService } from '../../core/services/punto-interes.service';
 import { ReporteService } from '../../core/services/reporte.service';
 import { ReporteWebSocketService } from '../../core/services/reporte-websocket.service';
 import { Categoria, EstadoPunto, PuntoInteres } from '../../core/models/punto-interes.model';
+import { ParticipanteUbicacionDTO } from '../../core/models/participante-ubicacion.model';
 import { FilterPanelComponent } from './filter-panel/filter-panel.component';
 import { ReportePopupComponent } from './reporte-popup/reporte-popup.component';
 import { ReporteFormComponent } from './reporte-form/reporte-form.component';
@@ -79,6 +81,11 @@ const DUDOSO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
   <circle cx="12" cy="17" r="0.5" fill="#fff" stroke="#fff"/>
 </svg>`;
 
+const PARTICIPANT_COLORS = [
+  '#f97316', '#3b82f6', '#10b981', '#8b5cf6',
+  '#ec4899', '#f59e0b', '#14b8a6', '#6366f1',
+];
+
 const ARGENTINA_CENTER: [number, number] = [-34.6, -64.1];
 
 interface EstadoOption {
@@ -116,12 +123,14 @@ export class MapComponent implements OnDestroy {
   private readonly wsService = inject(ReporteWebSocketService);
   private readonly authService = inject(AuthService);
   private readonly reporteService = inject(ReporteService);
+  private readonly locationSharingService = inject(LocationSharingService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly fb = inject(FormBuilder);
 
   private map: L.Map | undefined;
   private readonly leafletMarkers = new Map<number, L.Marker>();
+  private readonly marcadoresParticipantes = new Map<string, L.Marker>();
   private userLocationMarker: L.Marker | undefined;
 
   readonly selectedPunto = signal<PuntoInteres | null>(null);
@@ -164,6 +173,14 @@ export class MapComponent implements OnDestroy {
       }
     });
 
+    // Limpiar marcadores de participantes cuando se desactiva el modo viaje
+    effect(() => {
+      const activo = this.locationSharingService.modoViajeActivo();
+      if (!activo && this.map) {
+        this.zone.runOutsideAngular(() => this.limpiarMarcadoresParticipantes());
+      }
+    });
+
     afterNextRender(() => {
       this.zone.runOutsideAngular(() => {
         this.initMap();
@@ -201,6 +218,15 @@ export class MapComponent implements OnDestroy {
         }
         if (this.editandoPunto()?.id === id) {
           this.editandoPunto.set(null);
+        }
+      });
+
+    // Canal /topic/viajes/{id}/ubicaciones: actualizaciones de participantes
+    this.locationSharingService.participanteUbicacion$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((dto) => {
+        if (this.map) {
+          this.zone.runOutsideAngular(() => this.procesarUbicacionParticipante(dto));
         }
       });
   }
@@ -360,11 +386,7 @@ export class MapComponent implements OnDestroy {
     const color = isDudoso ? '#94a3b8' : CATEGORY_COLOR[punto.categoria];
     const label = isDudoso ? 'Aviso dudoso — información en disputa' : CATEGORY_LABEL[punto.categoria];
     const svg = isDudoso ? DUDOSO_SVG : CATEGORY_SVG[punto.categoria];
-    const extraStyle = isDudoso
-      ? 'opacity:0.55;'
-      : punto.estado === 'RESUELTO'
-        ? ''
-        : '';
+    const extraStyle = isDudoso ? 'opacity:0.55;' : '';
     const resoltoClass = punto.estado === 'RESUELTO' ? ' moto-pin--resuelto' : '';
     return L.divIcon({
       className: '',
@@ -411,5 +433,55 @@ export class MapComponent implements OnDestroy {
         this.leafletMarkers.set(punto.id, marker);
       }
     }
+  }
+
+  private procesarUbicacionParticipante(dto: ParticipanteUbicacionDTO): void {
+    const currentUser = this.authService.currentUser();
+    if (currentUser && dto.email === currentUser.email) return;
+
+    if (!dto.conectado || dto.latitud === null || dto.longitud === null) {
+      const marker = this.marcadoresParticipantes.get(dto.email);
+      if (marker) {
+        marker.remove();
+        this.marcadoresParticipantes.delete(dto.email);
+      }
+      return;
+    }
+
+    const existing = this.marcadoresParticipantes.get(dto.email);
+    if (existing) {
+      existing.setLatLng([dto.latitud, dto.longitud]);
+    } else {
+      const icon = this.crearIconoParticipante(dto.nombre, dto.email);
+      const marker = L.marker([dto.latitud, dto.longitud], { icon, zIndexOffset: 900 });
+      marker.addTo(this.map!);
+      this.marcadoresParticipantes.set(dto.email, marker);
+    }
+  }
+
+  private crearIconoParticipante(nombre: string, email: string): L.DivIcon {
+    const inicial = nombre.charAt(0).toUpperCase();
+    const color = this.getColorParticipante(email);
+    return L.divIcon({
+      className: '',
+      html: `<div class="participant-avatar" style="background:${color}" role="img" aria-label="Participante ${nombre}">
+               ${inicial}
+             </div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+  }
+
+  private getColorParticipante(email: string): string {
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+      hash = (email.charCodeAt(i) + ((hash << 5) - hash)) | 0;
+    }
+    return PARTICIPANT_COLORS[Math.abs(hash) % PARTICIPANT_COLORS.length];
+  }
+
+  private limpiarMarcadoresParticipantes(): void {
+    this.marcadoresParticipantes.forEach((marker) => marker.remove());
+    this.marcadoresParticipantes.clear();
   }
 }

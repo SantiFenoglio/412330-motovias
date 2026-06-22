@@ -1,23 +1,27 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { Toast } from 'primeng/toast';
+import { ToggleButton } from 'primeng/togglebutton';
 import { ViajeService } from '../../../core/services/viaje.service';
+import { LocationSharingService } from '../../../core/services/location-sharing.service';
 import { ViajeResponse } from '../../../core/models/viaje.model';
 
 @Component({
   selector: 'app-viaje-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [MessageService],
-  imports: [DatePipe, ButtonModule, Toast],
+  imports: [DatePipe, FormsModule, ButtonModule, Toast, ToggleButton],
   template: `
     @if (loading()) {
       <div class="loading-state" role="status" aria-live="polite">
@@ -80,6 +84,28 @@ import { ViajeResponse } from '../../../core/models/viaje.model';
           </div>
         </section>
 
+        <section class="modo-viaje-section" aria-label="Control del modo viaje">
+          <p class="modo-viaje-label">Modo Viaje</p>
+          <p class="modo-viaje-hint">Compartí tu ubicación en tiempo real con los participantes de esta caravana</p>
+
+          <p-toggleButton
+            [(ngModel)]="modoActivoModel"
+            onLabel="Apagar Modo Viaje"
+            offLabel="Activar Modo Viaje / Compartir Ubicación"
+            onIcon="pi pi-map-marker"
+            offIcon="pi pi-power-off"
+            [style]="{ width: '100%' }"
+            ariaLabel="Activar o desactivar el modo viaje para compartir tu ubicación"
+          />
+
+          @if (modoActivo()) {
+            <p class="modo-activo-hint" role="status" aria-live="polite">
+              <i class="pi pi-circle-fill modo-activo-dot" aria-hidden="true"></i>
+              Tu ubicación se está compartiendo con los participantes.
+            </p>
+          }
+        </section>
+
       </div>
     }
 
@@ -124,7 +150,7 @@ import { ViajeResponse } from '../../../core/models/viaje.model';
       line-height: 1.6;
     }
 
-    /* ── Metadata ──────────────────────────────────────────── */
+    /* ── Metadata ──────────────────────────────────────────────── */
     .meta-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -163,13 +189,14 @@ import { ViajeResponse } from '../../../core/models/viaje.model';
       color: #1e293b;
     }
 
-    /* ── Código ────────────────────────────────────────────── */
+    /* ── Código ────────────────────────────────────────────────── */
     .code-section {
       padding: 1.5rem 1.75rem;
       background: #fff;
       border: 1.5px solid #e2e8f0;
       border-radius: 16px;
       box-shadow: 0 2px 8px rgb(0 0 0 / .06);
+      margin-bottom: 1.5rem;
     }
 
     .code-section__label {
@@ -207,16 +234,78 @@ import { ViajeResponse } from '../../../core/models/viaje.model';
       cursor: text;
       line-height: 1;
     }
+
+    /* ── Modo Viaje ────────────────────────────────────────────── */
+    .modo-viaje-section {
+      padding: 1.5rem 1.75rem;
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / .06);
+    }
+
+    .modo-viaje-label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #64748b;
+      margin: 0 0 0.25rem;
+    }
+
+    .modo-viaje-hint {
+      font-size: 0.8125rem;
+      color: #94a3b8;
+      margin: 0 0 1.25rem;
+      line-height: 1.5;
+    }
+
+    .modo-activo-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.875rem 0 0;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #059669;
+    }
+
+    .modo-activo-dot {
+      font-size: 0.5rem;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
   `],
 })
 export class ViajeDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly viajeService = inject(ViajeService);
   private readonly messageService = inject(MessageService);
+  private readonly locationSharingService = inject(LocationSharingService);
 
   readonly loading = signal(true);
   readonly error = signal(false);
   readonly viaje = signal<ViajeResponse | null>(null);
+
+  readonly modoActivo = computed(() => this.locationSharingService.modoViajeActivo());
+
+  get modoActivoModel(): boolean {
+    return this.locationSharingService.modoViajeActivo();
+  }
+
+  set modoActivoModel(val: boolean) {
+    const v = this.viaje();
+    if (!v) return;
+    if (val) {
+      this.locationSharingService.iniciarCompartir(v.id);
+    } else {
+      this.locationSharingService.detenerCompartir(v.id);
+    }
+  }
 
   ngOnInit(): void {
     const codigo = this.route.snapshot.paramMap.get('codigo') ?? '';

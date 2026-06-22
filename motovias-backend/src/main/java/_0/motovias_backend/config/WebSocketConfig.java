@@ -18,8 +18,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Endpoint SockJS para el frontend Angular
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:4200")
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
+
+        // Endpoint WebSocket nativo sin SockJS — usado en tests de integración
+        registry.addEndpoint("/ws-native")
+                .setAllowedOriginPatterns("*");
     }
 }
