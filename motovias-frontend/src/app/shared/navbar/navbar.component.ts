@@ -55,9 +55,10 @@ export class NavbarComponent {
   readonly resolviendo = signal(false);
 
   readonly navItems: NavItem[] = [
-    { label: 'Mapa',         icon: 'pi pi-map',  route: '/map',          ariaLabel: 'Ir al mapa' },
-    { label: 'Mis Publicaciones', icon: 'pi pi-list', route: '/mis-reportes', ariaLabel: 'Ver mis publicaciones' },
-    { label: 'Perfil',       icon: 'pi pi-user', route: '/perfil',       ariaLabel: 'Ver mi perfil' },
+    { label: 'Mapa',              icon: 'pi pi-map',   route: '/map',          ariaLabel: 'Ir al mapa' },
+    { label: 'Mis Publicaciones', icon: 'pi pi-list',  route: '/mis-reportes', ariaLabel: 'Ver mis publicaciones' },
+    { label: 'Caravanas',         icon: 'pi pi-users', route: '/caravanas',    ariaLabel: 'Ir a viajes grupales' },
+    { label: 'Perfil',            icon: 'pi pi-user',  route: '/perfil',       ariaLabel: 'Ver mi perfil' },
   ];
 
   constructor() {

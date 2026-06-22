@@ -34,6 +34,20 @@ export const routes: Routes = [
             (m) => m.ReporteDetailComponent,
           ),
       },
+      {
+        path: 'caravanas',
+        loadComponent: () =>
+          import('./features/viajes/viaje-dashboard/viaje-dashboard.component').then(
+            (m) => m.ViajeDashboardComponent,
+          ),
+      },
+      {
+        path: 'caravanas/:codigo',
+        loadComponent: () =>
+          import('./features/viajes/viaje-detail/viaje-detail.component').then(
+            (m) => m.ViajeDetailComponent,
+          ),
+      },
       { path: '', redirectTo: 'map', pathMatch: 'full' },
     ],
   },
