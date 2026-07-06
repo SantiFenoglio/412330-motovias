@@ -115,6 +115,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
+
+		<!-- SDK oficial de Mercado Pago para integracion de pasarela de pagos -->
+		<dependency>
+			<groupId>com.mercadopago</groupId>
+			<artifactId>sdk-java</artifactId>
+			<version>3.3.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

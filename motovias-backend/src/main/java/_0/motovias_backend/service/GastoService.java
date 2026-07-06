@@ -2,6 +2,8 @@ package _0.motovias_backend.service;
 
 import _0.motovias_backend.dto.GastoRequestDTO;
 import _0.motovias_backend.dto.GastoResponseDTO;
+import _0.motovias_backend.dto.PreferenciaPagoRequestDTO;
+import _0.motovias_backend.dto.PreferenciaPagoResponseDTO;
 import _0.motovias_backend.dto.TransferenciaSimplificadaDTO;
 import _0.motovias_backend.model.Gasto;
 import _0.motovias_backend.model.User;
@@ -30,6 +32,7 @@ public class GastoService {
     private final ViajeRepository viajeRepository;
     private final ViajeParticipanteRepository participanteRepository;
     private final UserRepository userRepository;
+    private final MercadoPagoService mercadoPagoService;
 
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -168,6 +171,26 @@ public class GastoService {
         }
 
         return transferencias;
+    }
+
+    // ─── Pasarela de pago ───────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public PreferenciaPagoResponseDTO crearPreferenciaPago(
+            Long viajeId, PreferenciaPagoRequestDTO dto, String emailUsuarioAutenticado
+    ) {
+        Viaje viaje = findViajeOrThrow(viajeId);
+        User deudor = findUserOrThrow(emailUsuarioAutenticado);
+        validarMiembro(viaje, deudor);
+
+        String descripcion = "Liquidación de gastos - Viaje: " + viaje.getTitulo();
+
+        String initPoint = mercadoPagoService.crearPreferenciaPago(
+                dto.getMonto(), descripcion, deudor.getEmail(), dto.getAcreedorEmail());
+
+        return PreferenciaPagoResponseDTO.builder()
+                .initPoint(initPoint)
+                .build();
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────────────

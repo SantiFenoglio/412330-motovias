@@ -31,6 +31,7 @@ class GastoServiceTest {
     @Mock private ViajeRepository viajeRepository;
     @Mock private ViajeParticipanteRepository participanteRepository;
     @Mock private UserRepository userRepository;
+    @Mock private MercadoPagoService mercadoPagoService;
 
     @InjectMocks private GastoService gastoService;
 

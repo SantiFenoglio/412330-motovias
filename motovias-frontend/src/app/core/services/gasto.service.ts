@@ -5,6 +5,8 @@ import {
   GastoRequestDTO,
   GastoResponseDTO,
   ParticipanteGastoDTO,
+  PreferenciaPagoRequestDTO,
+  PreferenciaPagoResponseDTO,
   TransferenciaSimplificadaDTO,
 } from '../models/gasto.model';
 
@@ -31,6 +33,16 @@ export class GastoService {
   obtenerParticipantes(viajeId: number): Observable<ParticipanteGastoDTO[]> {
     return this.http.get<ParticipanteGastoDTO[]>(
       `${BASE_URL}/api/viajes/${viajeId}/participantes`,
+    );
+  }
+
+  crearPreferenciaPago(
+    viajeId: number,
+    preferencia: PreferenciaPagoRequestDTO,
+  ): Observable<PreferenciaPagoResponseDTO> {
+    return this.http.post<PreferenciaPagoResponseDTO>(
+      `${BASE_URL}/api/viajes/${viajeId}/gastos/preferencia`,
+      preferencia,
     );
   }
 }

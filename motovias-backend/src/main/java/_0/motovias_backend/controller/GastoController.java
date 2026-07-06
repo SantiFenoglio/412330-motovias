@@ -2,6 +2,8 @@ package _0.motovias_backend.controller;
 
 import _0.motovias_backend.dto.GastoRequestDTO;
 import _0.motovias_backend.dto.GastoResponseDTO;
+import _0.motovias_backend.dto.PreferenciaPagoRequestDTO;
+import _0.motovias_backend.dto.PreferenciaPagoResponseDTO;
 import _0.motovias_backend.dto.TransferenciaSimplificadaDTO;
 import _0.motovias_backend.service.GastoService;
 import jakarta.validation.Valid;
@@ -38,5 +40,15 @@ public class GastoController {
     @GetMapping("/balance")
     public ResponseEntity<List<TransferenciaSimplificadaDTO>> calcularBalance(@PathVariable Long viajeId) {
         return ResponseEntity.ok(gastoService.calcularBalance(viajeId));
+    }
+
+    @PostMapping("/preferencia")
+    public ResponseEntity<PreferenciaPagoResponseDTO> crearPreferenciaPago(
+            @PathVariable Long viajeId,
+            @Valid @RequestBody PreferenciaPagoRequestDTO dto,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                gastoService.crearPreferenciaPago(viajeId, dto, authentication.getName()));
     }
 }

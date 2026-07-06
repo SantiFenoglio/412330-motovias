@@ -19,6 +19,7 @@ import { Select } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { Toast } from 'primeng/toast';
 import { GastoService } from '../../../core/services/gasto.service';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   CATEGORIA_LABELS,
   CATEGORIA_OPTIONS,
@@ -175,6 +176,18 @@ import {
                     <span class="email-etiqueta">Para:</span>
                     <span>{{ t.acreedorEmail }}</span>
                   </div>
+                  @if (t.deudorEmail === usuarioActualEmail()) {
+                    <div class="transferencia-acciones">
+                      <p-button
+                        label="Pagar deudas con Mercado Pago"
+                        icon="pi pi-credit-card"
+                        [loading]="pagandoEmail() === t.acreedorEmail"
+                        [disabled]="pagandoEmail() !== null"
+                        (onClick)="pagarConMercadoPago(t)"
+                        aria-label="Pagar la deuda pendiente mediante Mercado Pago"
+                      />
+                    </div>
+                  }
                 </li>
               }
             </ul>
@@ -561,6 +574,12 @@ import {
     .email-etiqueta { font-weight: 600; color: #64748b; }
     .email-separador { color: #cbd5e1; }
 
+    .transferencia-acciones {
+      margin-top: 0.5rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+
     /* ── Formulario del diálogo ──────────────────────────────── */
     .form-field {
       display: flex;
@@ -588,6 +607,7 @@ import {
 export class GastosComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly gastoService = inject(GastoService);
+  private readonly authService = inject(AuthService);
   private readonly messageService = inject(MessageService);
   private readonly fb = inject(FormBuilder);
 
@@ -599,6 +619,9 @@ export class GastosComponent implements OnInit {
   readonly error = signal(false);
   readonly dialogVisible = signal(false);
   readonly submitting = signal(false);
+  readonly pagandoEmail = signal<string | null>(null);
+
+  readonly usuarioActualEmail = computed(() => this.authService.currentUser()?.email ?? '');
 
   readonly categoriaLabels = CATEGORIA_LABELS;
   readonly categoriaOptions = CATEGORIA_OPTIONS;
@@ -666,6 +689,32 @@ export class GastosComponent implements OnInit {
         });
       },
     });
+  }
+
+  pagarConMercadoPago(transferencia: TransferenciaSimplificadaDTO): void {
+    if (this.pagandoEmail() !== null) return;
+
+    this.pagandoEmail.set(transferencia.acreedorEmail);
+
+    this.gastoService
+      .crearPreferenciaPago(this.viajeId(), {
+        monto: transferencia.monto,
+        acreedorEmail: transferencia.acreedorEmail,
+      })
+      .subscribe({
+        next: ({ initPoint }) => {
+          window.location.href = initPoint;
+        },
+        error: () => {
+          this.pagandoEmail.set(null);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al iniciar el pago',
+            detail: 'No se pudo generar el enlace de pago de Mercado Pago. Intentá de nuevo.',
+            life: 5000,
+          });
+        },
+      });
   }
 
   private cargarDatos(viajeId: number): void {

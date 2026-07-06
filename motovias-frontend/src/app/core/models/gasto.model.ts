@@ -41,3 +41,12 @@ export interface ParticipanteGastoDTO {
   nombre: string;
   email: string;
 }
+
+export interface PreferenciaPagoRequestDTO {
+  monto: number;
+  acreedorEmail: string;
+}
+
+export interface PreferenciaPagoResponseDTO {
+  initPoint: string;
+}
