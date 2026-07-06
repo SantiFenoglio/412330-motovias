@@ -5,6 +5,7 @@ import _0.motovias_backend.dto.ViajeResponseDTO;
 import _0.motovias_backend.model.Viaje;
 import _0.motovias_backend.model.ViajeParticipante;
 import _0.motovias_backend.model.User;
+import _0.motovias_backend.repository.GastoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.repository.ViajeParticipanteRepository;
 import _0.motovias_backend.repository.ViajeRepository;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
@@ -37,6 +39,9 @@ class ViajeServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private GastoRepository gastoRepository;
 
     @InjectMocks
     private ViajeService viajeService;
@@ -211,6 +216,154 @@ class ViajeServiceTest {
 
         assertThat(resultado.getCodigo()).isEqualTo("ABC123");
         verify(viajeRepository).findByCodigo("ABC123");
+    }
+
+    // ── Viaje activo ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("obtenerViajeActivo retorna vacío cuando el usuario no participa de ningún viaje")
+    void obtenerViajeActivo_retornaVacioSinViajes() {
+        User usuario = usuarioConId(1L, "sinviaje@test.com", "Sin Viaje", null);
+
+        when(userRepository.findByEmail("sinviaje@test.com")).thenReturn(Optional.of(usuario));
+        when(viajeRepository.findTopByCreadorOrderByFechaCreacionDesc(usuario)).thenReturn(Optional.empty());
+        when(participanteRepository.findTopByUsuarioOrderByFechaUnionDesc(usuario)).thenReturn(Optional.empty());
+
+        Optional<ViajeResponseDTO> resultado = viajeService.obtenerViajeActivo("sinviaje@test.com");
+
+        assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    @DisplayName("obtenerViajeActivo retorna el viaje creado cuando el usuario es organizador")
+    void obtenerViajeActivo_retornaViajeComoCreador() {
+        User creador = usuarioConId(1L, "org@test.com", "Org", null);
+        Viaje viaje = viajeConCreador("ORG123", creador);
+        viaje.setFechaCreacion(LocalDateTime.now());
+
+        when(userRepository.findByEmail("org@test.com")).thenReturn(Optional.of(creador));
+        when(viajeRepository.findTopByCreadorOrderByFechaCreacionDesc(creador)).thenReturn(Optional.of(viaje));
+        when(participanteRepository.findTopByUsuarioOrderByFechaUnionDesc(creador)).thenReturn(Optional.empty());
+
+        Optional<ViajeResponseDTO> resultado = viajeService.obtenerViajeActivo("org@test.com");
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get().getCodigo()).isEqualTo("ORG123");
+    }
+
+    @Test
+    @DisplayName("obtenerViajeActivo elige el viaje más reciente cuando el usuario es creador de uno y participante de otro")
+    void obtenerViajeActivo_eligeElMasReciente() {
+        User usuario = usuarioConId(1L, "user@test.com", "User", null);
+        User otroCreador = usuarioConId(2L, "otro@test.com", "Otro", null);
+
+        Viaje viajeCreado = viajeConCreador("VIEJO1", usuario);
+        viajeCreado.setFechaCreacion(LocalDateTime.now().minusDays(5));
+
+        Viaje viajeUnido = viajeConCreador("NUEVO1", otroCreador);
+        ViajeParticipante participacion = ViajeParticipante.builder()
+                .viaje(viajeUnido)
+                .usuario(usuario)
+                .fechaUnion(LocalDateTime.now())
+                .build();
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(usuario));
+        when(viajeRepository.findTopByCreadorOrderByFechaCreacionDesc(usuario)).thenReturn(Optional.of(viajeCreado));
+        when(participanteRepository.findTopByUsuarioOrderByFechaUnionDesc(usuario)).thenReturn(Optional.of(participacion));
+
+        Optional<ViajeResponseDTO> resultado = viajeService.obtenerViajeActivo("user@test.com");
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get().getCodigo()).isEqualTo("NUEVO1");
+    }
+
+    // ── Abandonar caravana ───────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("salirDeViaje elimina la participación del usuario")
+    void salirDeViaje_eliminaParticipante() {
+        User organizador = usuarioConId(1L, "org@test.com", "Org", null);
+        User participante = usuarioConId(2L, "part@test.com", "Part", null);
+        Viaje viaje = viajeConCreador("SAL123", organizador);
+        ViajeParticipante participacion = ViajeParticipante.builder()
+                .viaje(viaje)
+                .usuario(participante)
+                .build();
+
+        when(viajeRepository.findByCodigo("SAL123")).thenReturn(Optional.of(viaje));
+        when(userRepository.findByEmail("part@test.com")).thenReturn(Optional.of(participante));
+        when(participanteRepository.findByViajeAndUsuario(viaje, participante)).thenReturn(Optional.of(participacion));
+
+        viajeService.salirDeViaje("SAL123", "part@test.com");
+
+        verify(participanteRepository).delete(participacion);
+    }
+
+    @Test
+    @DisplayName("salirDeViaje lanza 400 cuando el organizador intenta abandonar su propia caravana")
+    void salirDeViaje_rechazaAlOrganizador() {
+        User organizador = usuarioConId(1L, "org@test.com", "Org", null);
+        Viaje viaje = viajeConCreador("ORG999", organizador);
+
+        when(viajeRepository.findByCodigo("ORG999")).thenReturn(Optional.of(viaje));
+        when(userRepository.findByEmail("org@test.com")).thenReturn(Optional.of(organizador));
+
+        assertThatThrownBy(() -> viajeService.salirDeViaje("ORG999", "org@test.com"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("organizador");
+    }
+
+    @Test
+    @DisplayName("salirDeViaje lanza 400 cuando el usuario no es participante de la caravana")
+    void salirDeViaje_rechazaSiNoEsParticipante() {
+        User organizador = usuarioConId(1L, "org@test.com", "Org", null);
+        User ajeno = usuarioConId(3L, "ajeno@test.com", "Ajeno", null);
+        Viaje viaje = viajeConCreador("AJE123", organizador);
+
+        when(viajeRepository.findByCodigo("AJE123")).thenReturn(Optional.of(viaje));
+        when(userRepository.findByEmail("ajeno@test.com")).thenReturn(Optional.of(ajeno));
+        when(participanteRepository.findByViajeAndUsuario(viaje, ajeno)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> viajeService.salirDeViaje("AJE123", "ajeno@test.com"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("participante");
+    }
+
+    // ── Eliminar caravana (organizador) ───────────────────────────────────────
+
+    @Test
+    @DisplayName("eliminarViaje borra gastos, participantes y el viaje cuando lo pide el organizador")
+    void eliminarViaje_organizador_borraEnCascada() {
+        User organizador = usuarioConId(1L, "org@test.com", "Org", null);
+        Viaje viaje = viajeConCreador("DEL123", organizador);
+
+        when(viajeRepository.findByCodigo("DEL123")).thenReturn(Optional.of(viaje));
+        when(userRepository.findByEmail("org@test.com")).thenReturn(Optional.of(organizador));
+
+        viajeService.eliminarViaje("DEL123", "org@test.com");
+
+        verify(gastoRepository).deleteByViaje(viaje);
+        verify(participanteRepository).deleteByViaje(viaje);
+        verify(viajeRepository).delete(viaje);
+    }
+
+    @Test
+    @DisplayName("eliminarViaje lanza 403 cuando lo pide un participante que no es el organizador")
+    void eliminarViaje_noOrganizador_lanza403() {
+        User organizador = usuarioConId(1L, "org@test.com", "Org", null);
+        User participante = usuarioConId(2L, "part@test.com", "Part", null);
+        Viaje viaje = viajeConCreador("DEL999", organizador);
+
+        when(viajeRepository.findByCodigo("DEL999")).thenReturn(Optional.of(viaje));
+        when(userRepository.findByEmail("part@test.com")).thenReturn(Optional.of(participante));
+
+        assertThatThrownBy(() -> viajeService.eliminarViaje("DEL999", "part@test.com"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("organizador");
+
+        verify(viajeRepository, never()).delete(any());
+        verify(gastoRepository, never()).deleteByViaje(any());
+        verify(participanteRepository, never()).deleteByViaje(any());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

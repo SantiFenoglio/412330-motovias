@@ -12,3 +12,9 @@ export interface ViajeResponse {
   organizadorNombre: string;
   organizadorEmail: string;
 }
+
+export interface ParticipanteResponse {
+  id: number;
+  nombre: string;
+  email: string;
+}

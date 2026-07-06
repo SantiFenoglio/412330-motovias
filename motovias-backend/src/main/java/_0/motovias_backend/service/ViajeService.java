@@ -1,10 +1,12 @@
 package _0.motovias_backend.service;
 
+import _0.motovias_backend.dto.ParticipanteResponseDTO;
 import _0.motovias_backend.dto.ViajeRequestDTO;
 import _0.motovias_backend.dto.ViajeResponseDTO;
 import _0.motovias_backend.model.Viaje;
 import _0.motovias_backend.model.ViajeParticipante;
 import _0.motovias_backend.model.User;
+import _0.motovias_backend.repository.GastoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.repository.ViajeParticipanteRepository;
 import _0.motovias_backend.repository.ViajeRepository;
@@ -16,6 +18,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,7 @@ public class ViajeService {
     private final ViajeRepository viajeRepository;
     private final ViajeParticipanteRepository participanteRepository;
     private final UserRepository userRepository;
+    private final GastoRepository gastoRepository;
 
     // Excluye O/0 e I/1 para evitar confusión visual
     private static final String CODIGO_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -44,6 +50,25 @@ public class ViajeService {
                 .build();
 
         return toDTO(viajeRepository.save(viaje));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ParticipanteResponseDTO> listarParticipantes(Long viajeId) {
+        Viaje viaje = viajeRepository.findById(viajeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Viaje no encontrado con id: " + viajeId));
+
+        List<ParticipanteResponseDTO> resultado = new ArrayList<>();
+
+        resultado.add(buildParticipanteDTO(viaje.getCreador()));
+
+        participanteRepository.findByViajeWithUsuario(viaje).stream()
+                .map(ViajeParticipante::getUsuario)
+                .filter(User::isActivo)
+                .map(this::buildParticipanteDTO)
+                .forEach(resultado::add);
+
+        return resultado;
     }
 
     public ViajeResponseDTO buscarPorCodigo(String codigo) {
@@ -78,6 +103,62 @@ public class ViajeService {
         return toDTO(viaje);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<ViajeResponseDTO> obtenerViajeActivo(String email) {
+        User usuario = findUserOrThrow(email);
+
+        Optional<Viaje> comoCreador = viajeRepository.findTopByCreadorOrderByFechaCreacionDesc(usuario);
+        Optional<ViajeParticipante> comoParticipante =
+                participanteRepository.findTopByUsuarioOrderByFechaUnionDesc(usuario);
+
+        if (comoCreador.isEmpty() && comoParticipante.isEmpty()) {
+            return Optional.empty();
+        }
+        if (comoCreador.isEmpty()) {
+            return Optional.of(toDTO(comoParticipante.get().getViaje()));
+        }
+        if (comoParticipante.isEmpty()) {
+            return Optional.of(toDTO(comoCreador.get()));
+        }
+
+        boolean creadorEsMasReciente = comoCreador.get().getFechaCreacion()
+                .isAfter(comoParticipante.get().getFechaUnion());
+        Viaje viajeActivo = creadorEsMasReciente ? comoCreador.get() : comoParticipante.get().getViaje();
+        return Optional.of(toDTO(viajeActivo));
+    }
+
+    @Transactional
+    public void salirDeViaje(String codigo, String emailUsuario) {
+        Viaje viaje = findViajeOrThrow(codigo);
+        User usuario = findUserOrThrow(emailUsuario);
+
+        if (viaje.getCreador().getId().equals(usuario.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El organizador no puede abandonar su propia caravana");
+        }
+
+        ViajeParticipante participante = participanteRepository.findByViajeAndUsuario(viaje, usuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "No eres participante de esta caravana"));
+
+        participanteRepository.delete(participante);
+    }
+
+    @Transactional
+    public void eliminarViaje(String codigo, String emailUsuario) {
+        Viaje viaje = findViajeOrThrow(codigo);
+        User usuario = findUserOrThrow(emailUsuario);
+
+        if (!viaje.getCreador().getId().equals(usuario.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Solo el organizador puede eliminar la caravana");
+        }
+
+        gastoRepository.deleteByViaje(viaje);
+        participanteRepository.deleteByViaje(viaje);
+        viajeRepository.delete(viaje);
+    }
+
     // Genera un código único garantizado contra colisiones en BD
     String generarCodigoUnico() {
         String codigo;
@@ -105,6 +186,19 @@ public class ViajeService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                         "Usuario no encontrado"));
+    }
+
+    private ParticipanteResponseDTO buildParticipanteDTO(User u) {
+        String nombre = u.getNombre();
+        String apellido = u.getApellido();
+        if (apellido != null && !apellido.isBlank()) {
+            nombre += " " + apellido;
+        }
+        return ParticipanteResponseDTO.builder()
+                .id(u.getId())
+                .nombre(nombre)
+                .email(u.getEmail())
+                .build();
     }
 
     private ViajeResponseDTO toDTO(Viaje v) {

@@ -48,6 +48,13 @@ export const routes: Routes = [
             (m) => m.ViajeDetailComponent,
           ),
       },
+      {
+        path: 'viajes/:id/gastos',
+        loadComponent: () =>
+          import('./features/viajes/gastos/gastos.component').then(
+            (m) => m.GastosComponent,
+          ),
+      },
       { path: '', redirectTo: 'map', pathMatch: 'full' },
     ],
   },

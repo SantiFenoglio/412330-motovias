@@ -6,7 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -21,7 +21,7 @@ import { ViajeResponse } from '../../../core/models/viaje.model';
   selector: 'app-viaje-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [MessageService],
-  imports: [DatePipe, FormsModule, ButtonModule, Toast, ToggleButton],
+  imports: [DatePipe, FormsModule, RouterLink, ButtonModule, Toast, ToggleButton],
   template: `
     @if (loading()) {
       <div class="loading-state" role="status" aria-live="polite">
@@ -82,6 +82,22 @@ import { ViajeResponse } from '../../../core/models/viaje.model';
               ariaLabel="Copiar código de la caravana"
             />
           </div>
+        </section>
+
+        <section class="gastos-section" aria-label="Acceso a la gestión de gastos grupales">
+          <p class="gastos-label">Gestión de Gastos</p>
+          <p class="gastos-hint">
+            Registrá los gastos del grupo, consultá el historial y liquidá las deudas entre participantes.
+          </p>
+          <a
+            [routerLink]="['/viajes', v.id, 'gastos']"
+            class="gastos-link"
+            aria-label="Ir a la gestión de gastos de esta caravana"
+          >
+            <i class="pi pi-wallet" aria-hidden="true"></i>
+            Ver gastos y balance de la caravana
+            <i class="pi pi-arrow-right gastos-arrow" aria-hidden="true"></i>
+          </a>
         </section>
 
         <section class="modo-viaje-section" aria-label="Control del modo viaje">
@@ -234,6 +250,57 @@ import { ViajeResponse } from '../../../core/models/viaje.model';
       cursor: text;
       line-height: 1;
     }
+
+    /* ── Gastos ─────────────────────────────────────────────────── */
+    .gastos-section {
+      padding: 1.5rem 1.75rem;
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / .06);
+      margin-bottom: 1.5rem;
+    }
+
+    .gastos-label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #64748b;
+      margin: 0 0 0.25rem;
+    }
+
+    .gastos-hint {
+      font-size: 0.8125rem;
+      color: #94a3b8;
+      margin: 0 0 1.25rem;
+      line-height: 1.5;
+    }
+
+    .gastos-link {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.875rem 1.25rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      color: #0f172a;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .gastos-link:hover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .gastos-link:focus-visible {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    .gastos-arrow { margin-left: auto; font-size: 0.875rem; }
 
     /* ── Modo Viaje ────────────────────────────────────────────── */
     .modo-viaje-section {
