@@ -1,4 +1,5 @@
 <p-toast />
+<p-confirmDialog [style]="{ maxWidth: '460px' }" acceptButtonStyleClass="p-button-danger" />
 
 <div class="page-shell">
   <header class="page-header">
@@ -308,4 +309,24 @@
       Cerrar sesión
     </button>
   </div>
+
+  <section class="danger-zone" aria-labelledby="danger-zone-title">
+    <h2 id="danger-zone-title" class="danger-zone__title">
+      <i class="pi pi-shield" aria-hidden="true"></i>
+      Zona crítica
+    </h2>
+    <p class="danger-zone__desc">
+      Eliminá tu cuenta y todos tus datos personales de forma permanente, en ejercicio de tu
+      derecho al olvido. Esta acción no se puede deshacer.
+    </p>
+    <p-button
+      label="Eliminar cuenta y datos personales"
+      icon="pi pi-trash"
+      severity="danger"
+      [outlined]="true"
+      [loading]="isDeletingAccount()"
+      (onClick)="eliminarCuenta()"
+      aria-label="Eliminar cuenta y datos personales de forma permanente"
+    />
+  </section>
 </div>

@@ -290,6 +290,32 @@
   outline-offset: 2px;
 }
 
+/* Danger zone */
+.danger-zone {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  border: 1.5px dashed #fca5a5;
+  border-radius: 12px;
+  background: #fef2f2;
+}
+
+.danger-zone__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #b91c1c;
+  margin: 0 0 0.5rem;
+}
+
+.danger-zone__desc {
+  font-size: 0.8125rem;
+  color: #7f1d1d;
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
 /* Responsive: collapse to single column on mobile */
 @media (max-width: 540px) {
   .form-grid {

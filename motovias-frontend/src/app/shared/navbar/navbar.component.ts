@@ -59,6 +59,7 @@ export class NavbarComponent {
     { label: 'Mis Publicaciones', icon: 'pi pi-list',  route: '/mis-reportes', ariaLabel: 'Ver mis publicaciones' },
     { label: 'Caravanas',         icon: 'pi pi-users', route: '/caravanas',    ariaLabel: 'Ir a viajes grupales' },
     { label: 'Perfil',            icon: 'pi pi-user',  route: '/perfil',       ariaLabel: 'Ver mi perfil' },
+    { label: 'Ayuda',             icon: 'pi pi-question-circle', route: '/ayuda', ariaLabel: 'Ir al Centro de Ayuda' },
   ];
 
   constructor() {

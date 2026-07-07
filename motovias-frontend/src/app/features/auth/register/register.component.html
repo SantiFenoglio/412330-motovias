@@ -166,13 +166,38 @@
         }
       </div>
 
+      <!-- Términos y Condiciones -->
+      <div class="field">
+        <div class="terminos-field">
+          <p-checkbox
+            inputId="terminosAceptados"
+            formControlName="terminosAceptados"
+            [binary]="true"
+            aria-describedby="terminos-error"
+          />
+          <label for="terminosAceptados" class="terminos-label">
+            Leí y acepto los
+            <a href="#" class="auth-link" (click)="abrirTerminos($event)">Términos y Condiciones</a>
+            de Motovías *
+          </label>
+        </div>
+        @if (terminosControl.invalid && terminosControl.touched) {
+          <small id="terminos-error" class="field-error" role="alert">
+            Debés aceptar los Términos y Condiciones para crear tu cuenta.
+          </small>
+        }
+      </div>
+
       <p-button
         type="submit"
         label="Registrarme"
         [loading]="isLoading()"
+        [disabled]="form.invalid"
         styleClass="motovias-btn"
       />
     </form>
+
+    <app-terminos-dialog [(visible)]="mostrarTerminos" />
 
     <p class="auth-footer">
       ¿Ya tenés cuenta?

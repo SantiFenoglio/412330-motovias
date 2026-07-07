@@ -19,9 +19,11 @@ import { Password } from 'primeng/password';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { Checkbox } from 'primeng/checkbox';
 import { AuthService } from '../../../core/services/auth.service';
 import { TipoMotocicleta } from '../../../core/services/user.service';
 import { PASSWORD_REGEX } from '../../perfil/perfil.component';
+import { TerminosDialogComponent } from '../../../shared/terminos-dialog/terminos-dialog.component';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -33,7 +35,17 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, InputText, Password, Button, Message, RouterLink, SelectModule],
+  imports: [
+    ReactiveFormsModule,
+    InputText,
+    Password,
+    Button,
+    Message,
+    RouterLink,
+    SelectModule,
+    Checkbox,
+    TerminosDialogComponent,
+  ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +72,7 @@ export class RegisterComponent {
       tipoMotocicleta: [null as TipoMotocicleta | null],
       password: ['', [Validators.required, Validators.pattern(PASSWORD_REGEX)]],
       confirmPassword: ['', Validators.required],
+      terminosAceptados: [false, [Validators.requiredTrue]],
     },
     { validators: passwordsMatch },
   );
@@ -95,6 +108,16 @@ export class RegisterComponent {
   }
   get confirmPasswordControl() {
     return this.form.controls.confirmPassword;
+  }
+  get terminosControl() {
+    return this.form.controls.terminosAceptados;
+  }
+
+  readonly mostrarTerminos = signal(false);
+
+  abrirTerminos(event: Event): void {
+    event.preventDefault();
+    this.mostrarTerminos.set(true);
   }
 
   onSubmit(): void {

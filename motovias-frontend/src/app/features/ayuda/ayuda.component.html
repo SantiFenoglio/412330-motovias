@@ -1,0 +1,33 @@
+<div class="page-shell">
+  <header class="page-header">
+    <h1 class="page-title">
+      <i class="pi pi-question-circle" aria-hidden="true"></i>
+      Centro de Ayuda
+    </h1>
+    <p class="page-subtitle">Preguntas frecuentes y soporte asistido, disponible las 24 horas</p>
+  </header>
+
+  <div class="faq-categorias">
+    @for (categoria of categorias; track categoria.nombre) {
+      <section class="faq-categoria" [attr.aria-labelledby]="'faq-cat-' + categoria.nombre">
+        <h2 [id]="'faq-cat-' + categoria.nombre" class="faq-categoria__titulo">
+          <i [class]="categoria.icono" aria-hidden="true"></i>
+          {{ categoria.nombre }}
+        </h2>
+
+        <p-accordion [multiple]="true">
+          @for (item of categoria.preguntas; track item.pregunta; let i = $index) {
+            <p-accordion-panel [value]="categoria.nombre + '-' + i">
+              <p-accordion-header>{{ item.pregunta }}</p-accordion-header>
+              <p-accordion-content>
+                <p class="faq-respuesta">{{ item.respuesta }}</p>
+              </p-accordion-content>
+            </p-accordion-panel>
+          }
+        </p-accordion>
+      </section>
+    }
+  </div>
+</div>
+
+<app-asistente-virtual />

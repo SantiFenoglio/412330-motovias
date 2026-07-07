@@ -55,6 +55,11 @@ export const routes: Routes = [
             (m) => m.GastosComponent,
           ),
       },
+      {
+        path: 'ayuda',
+        loadComponent: () =>
+          import('./features/ayuda/ayuda.component').then((m) => m.AyudaComponent),
+      },
       { path: '', redirectTo: 'map', pathMatch: 'full' },
     ],
   },

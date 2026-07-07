@@ -1,0 +1,26 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', 'max-width': '640px' }"
+  styleClass="terminos-dialog"
+  header="Términos y Condiciones de Motovías"
+  role="dialog"
+  [ariaLabel]="'Términos y Condiciones de Motovías'"
+>
+  <div class="terminos-body">
+    @for (seccion of secciones; track seccion.titulo) {
+      <section class="terminos-seccion">
+        <h3 class="terminos-seccion__titulo">{{ seccion.titulo }}</h3>
+        @for (parrafo of seccion.parrafos; track parrafo) {
+          <p class="terminos-seccion__parrafo">{{ parrafo }}</p>
+        }
+      </section>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cerrar" icon="pi pi-check" (onClick)="cerrar()" />
+  </ng-template>
+</p-dialog>

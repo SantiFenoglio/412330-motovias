@@ -1,0 +1,72 @@
+<button
+  type="button"
+  class="asistente-fab"
+  (click)="toggle()"
+  [attr.aria-expanded]="abierto()"
+  aria-controls="asistente-panel"
+  aria-label="Abrir asistente virtual de soporte"
+>
+  <i [class]="abierto() ? 'pi pi-times' : 'pi pi-comments'" aria-hidden="true"></i>
+</button>
+
+@if (abierto()) {
+  <section id="asistente-panel" class="asistente-panel" role="complementary" aria-label="Asistente virtual">
+    <header class="asistente-panel__header">
+      <div class="asistente-panel__title">
+        <i class="pi pi-android" aria-hidden="true"></i>
+        <div>
+          <p class="asistente-panel__nombre">Asistente Motovías</p>
+          <p class="asistente-panel__estado">
+            <span class="asistente-panel__dot" aria-hidden="true"></span>
+            Disponible 24/7
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="asistente-panel__cerrar"
+        (click)="toggle()"
+        aria-label="Cerrar asistente virtual"
+      >
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <div #historial class="asistente-panel__historial" role="log" aria-live="polite">
+      @for (mensaje of mensajes(); track mensaje.id) {
+        <div
+          class="asistente-mensaje"
+          [class.asistente-mensaje--usuario]="mensaje.autor === 'usuario'"
+          [class.asistente-mensaje--bot]="mensaje.autor === 'asistente'"
+        >
+          <p class="asistente-mensaje__texto">{{ mensaje.texto }}</p>
+        </div>
+      }
+      @if (enviando()) {
+        <div class="asistente-mensaje asistente-mensaje--bot asistente-mensaje--escribiendo" aria-live="polite">
+          <span class="asistente-typing-dot"></span>
+          <span class="asistente-typing-dot"></span>
+          <span class="asistente-typing-dot"></span>
+        </div>
+      }
+    </div>
+
+    <form class="asistente-panel__form" (submit)="onSubmit($event)">
+      <input
+        type="text"
+        pInputText
+        [formControl]="mensajeControl"
+        placeholder="Escribí tu consulta…"
+        aria-label="Mensaje para el asistente virtual"
+        class="asistente-panel__input"
+        autocomplete="off"
+      />
+      <p-button
+        type="submit"
+        icon="pi pi-send"
+        [disabled]="mensajeControl.invalid || enviando()"
+        aria-label="Enviar mensaje"
+      />
+    </form>
+  </section>
+}

@@ -23,7 +23,8 @@ import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Password } from 'primeng/password';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 export const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -51,8 +52,9 @@ function confirmPasswordValidator(group: AbstractControl): ValidationErrors | nu
     ToastModule,
     SkeletonModule,
     Password,
+    ConfirmDialog,
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css',
 })
@@ -62,11 +64,13 @@ export class PerfilComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   readonly profile = signal<UserProfile | null>(null);
   readonly isEditing = signal(false);
   readonly isSaving = signal(false);
   readonly isLoading = signal(true);
+  readonly isDeletingAccount = signal(false);
 
   readonly displayName = computed(() => {
     const p = this.profile();
@@ -239,5 +243,36 @@ export class PerfilComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  eliminarCuenta(): void {
+    if (this.isDeletingAccount()) return;
+
+    this.confirmationService.confirm({
+      header: 'Eliminar cuenta y datos personales',
+      message:
+        'Esta acción eliminará tu cuenta y todos tus datos personales de forma permanente, incluyendo publicaciones, votos, caravanas y gastos asociados. No se puede deshacer. ¿Confirmás que querés continuar?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar mi cuenta',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.isDeletingAccount.set(true);
+        this.userService.deleteAccount().subscribe({
+          next: () => {
+            this.authService.logout();
+            this.router.navigate(['/auth/login']);
+          },
+          error: () => {
+            this.isDeletingAccount.set(false);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'No se pudo eliminar la cuenta. Intentá de nuevo.',
+            });
+          },
+        });
+      },
+    });
   }
 }

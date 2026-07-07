@@ -107,6 +107,18 @@
   font-weight: 500;
 }
 
+.terminos-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.terminos-label {
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: 1.4;
+}
+
 .auth-footer {
   text-align: center;
   margin-top: 1.5rem;

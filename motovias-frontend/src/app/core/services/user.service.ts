@@ -41,4 +41,8 @@ export class UserService {
   updateProfile(data: UserProfileUpdate): Observable<UserProfile> {
     return this.http.put<UserProfile>(`${BASE_URL}/api/users/me`, data);
   }
+
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(`${BASE_URL}/api/usuarios/mi-cuenta`);
+  }
 }

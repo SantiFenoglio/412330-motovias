@@ -27,4 +27,8 @@ public interface ViajeParticipanteRepository extends JpaRepository<ViajeParticip
     @Modifying
     @Query("DELETE FROM ViajeParticipante vp WHERE vp.viaje = :viaje")
     void deleteByViaje(@Param("viaje") Viaje viaje);
+
+    @Modifying
+    @Query("DELETE FROM ViajeParticipante vp WHERE vp.usuario = :usuario")
+    void deleteByUsuario(@Param("usuario") User usuario);
 }

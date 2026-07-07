@@ -2,10 +2,18 @@ package _0.motovias_backend.service;
 
 import _0.motovias_backend.dto.UserProfileResponseDTO;
 import _0.motovias_backend.dto.UserProfileUpdateDTO;
+import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.Role;
 import _0.motovias_backend.model.TipoMotocicleta;
 import _0.motovias_backend.model.User;
+import _0.motovias_backend.model.Viaje;
+import _0.motovias_backend.repository.GastoRepository;
+import _0.motovias_backend.repository.NotificacionRepository;
+import _0.motovias_backend.repository.PuntoInteresRepository;
+import _0.motovias_backend.repository.ReporteVotoRepository;
 import _0.motovias_backend.repository.UserRepository;
+import _0.motovias_backend.repository.ViajeParticipanteRepository;
+import _0.motovias_backend.repository.ViajeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +38,12 @@ class UserServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private NotificacionRepository notificacionRepository;
+    @Mock private ReporteVotoRepository reporteVotoRepository;
+    @Mock private PuntoInteresRepository puntoInteresRepository;
+    @Mock private ViajeParticipanteRepository viajeParticipanteRepository;
+    @Mock private GastoRepository gastoRepository;
+    @Mock private ViajeRepository viajeRepository;
     @InjectMocks private UserService userService;
 
     private static final String EMAIL = "rider@motovias.com";
@@ -176,5 +191,59 @@ class UserServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
                         .isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    @DisplayName("eliminarCuenta: usuario existente sin reportes ni viajes → borra dependencias directas y al usuario")
+    void eliminarCuenta_existingUserWithoutRelations_deletesDirectDependenciesAndUser() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(mockUser));
+        when(puntoInteresRepository.findByUsuarioIdOrderByFechaCreacionDesc(mockUser.getId()))
+                .thenReturn(List.of());
+        when(viajeRepository.findByCreador(mockUser)).thenReturn(List.of());
+
+        userService.eliminarCuenta(EMAIL);
+
+        verify(notificacionRepository).deleteByDestinatario(mockUser);
+        verify(reporteVotoRepository).deleteByUsuario(mockUser);
+        verify(viajeParticipanteRepository).deleteByUsuario(mockUser);
+        verify(gastoRepository).deleteByPagador(mockUser);
+        verify(puntoInteresRepository).deleteAll(List.of());
+        verify(viajeRepository).deleteAll(List.of());
+        verify(userRepository).delete(mockUser);
+    }
+
+    @Test
+    @DisplayName("eliminarCuenta: usuario con reportes y viajes propios → limpia votos y gastos asociados antes de borrar")
+    void eliminarCuenta_userWithReportsAndTrips_cleansUpAssociatedEntitiesBeforeDeleting() {
+        PuntoInteres reporte = PuntoInteres.builder().id(10L).build();
+        Viaje viaje = Viaje.builder().id(20L).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(mockUser));
+        when(puntoInteresRepository.findByUsuarioIdOrderByFechaCreacionDesc(mockUser.getId()))
+                .thenReturn(List.of(reporte));
+        when(viajeRepository.findByCreador(mockUser)).thenReturn(List.of(viaje));
+
+        userService.eliminarCuenta(EMAIL);
+
+        verify(reporteVotoRepository).deleteByReporte(reporte);
+        verify(puntoInteresRepository).deleteAll(List.of(reporte));
+        verify(gastoRepository).deleteByViaje(viaje);
+        verify(viajeParticipanteRepository).deleteByViaje(viaje);
+        verify(viajeRepository).deleteAll(List.of(viaje));
+        verify(userRepository).delete(mockUser);
+    }
+
+    @Test
+    @DisplayName("eliminarCuenta: usuario inexistente → lanza 404 y no borra nada")
+    void eliminarCuenta_userNotFound_throws404AndDeletesNothing() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.eliminarCuenta(EMAIL))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.NOT_FOUND));
+
+        verify(userRepository, never()).delete(any());
+        verifyNoInteractions(notificacionRepository, reporteVotoRepository, viajeParticipanteRepository, gastoRepository);
     }
 }
