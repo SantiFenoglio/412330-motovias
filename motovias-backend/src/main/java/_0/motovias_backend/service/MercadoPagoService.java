@@ -22,6 +22,14 @@ import java.util.List;
 @Service
 public class MercadoPagoService {
 
+    /**
+     * Timeouts cortos para que, si el contenedor no tiene salida a internet o
+     * Mercado Pago no responde, el SDK falle rápido con una excepción
+     * controlada en lugar de dejar el hilo de Spring Boot colgado esperando
+     * una respuesta que nunca llega (lo que termina en un 502 del proxy).
+     */
+    private static final int TIMEOUT_MS = 5000;
+
     @Value("${mercadopago.access-token}")
     private String accessToken;
 
@@ -35,11 +43,25 @@ public class MercadoPagoService {
      */
     @PostConstruct
     public void configurarCredenciales() {
+        MercadoPagoConfig.setConnectionTimeout(TIMEOUT_MS);
+        MercadoPagoConfig.setConnectionRequestTimeout(TIMEOUT_MS);
+        MercadoPagoConfig.setSocketTimeout(TIMEOUT_MS);
+
         if (accessToken == null || accessToken.isBlank()) {
             log.warn("MERCADOPAGO_ACCESS_TOKEN no está definido: la creación de "
                     + "preferencias de pago fallará hasta que se configure la variable de entorno.");
             return;
         }
+
+        // El token puede llegar desde el .env de Docker con comillas o espacios
+        // colgando (p. ej. MERCADOPAGO_ACCESS_TOKEN="APP-123..." ), que rompen
+        // el HttpClient interno del SDK al armar el header Authorization.
+        String tokenSaneado = accessToken.trim().replaceAll("^[\"']|[\"']$", "");
+        if (!tokenSaneado.equals(accessToken)) {
+            log.warn("MERCADOPAGO_ACCESS_TOKEN contenía comillas o espacios sobrantes; se sanearon antes de usarlo.");
+        }
+        accessToken = tokenSaneado;
+
         MercadoPagoConfig.setAccessToken(accessToken);
     }
 
@@ -79,12 +101,16 @@ public class MercadoPagoService {
 
         try {
             PreferenceClient client = new PreferenceClient();
+            log.info("Iniciando llamada externa al SDK de Mercado Pago...");
             Preference preference = client.create(request);
+            log.info("Respuesta recibida del SDK de Mercado Pago, preferencia id={}", preference.getId());
             return preference.getInitPoint();
         } catch (MPApiException e) {
+            log.error("Mercado Pago respondió con error de API: {}", e.getApiResponse().getContent(), e);
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Mercado Pago rechazó la solicitud: " + e.getApiResponse().getContent());
         } catch (MPException e) {
+            log.error("Fallo al invocar al SDK de Mercado Pago (posible timeout o error de red)", e);
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "No se pudo crear la preferencia de pago");
         }
