@@ -1,5 +1,6 @@
 package _0.motovias_backend.service;
 
+import _0.motovias_backend.dto.ReporteEventoResponseDTO;
 import _0.motovias_backend.dto.ReporteRequestDTO;
 import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.ReporteUpdateDTO;
@@ -7,11 +8,14 @@ import _0.motovias_backend.dto.VotoRequestDTO;
 import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.FuenteUbicacion;
 import _0.motovias_backend.model.PuntoInteres;
+import _0.motovias_backend.model.ReporteEvento;
 import _0.motovias_backend.model.ReporteVoto;
 import _0.motovias_backend.model.Role;
+import _0.motovias_backend.model.TipoEventoReporte;
 import _0.motovias_backend.model.TipoVoto;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.repository.PuntoInteresRepository;
+import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.ReporteVotoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +40,7 @@ public class ReporteService {
     private final PuntoInteresRepository repository;
     private final UserRepository userRepository;
     private final ReporteVotoRepository votoRepository;
+    private final ReporteEventoRepository eventoRepository;
     private final NotificacionService notificacionService;
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
@@ -48,6 +53,7 @@ public class ReporteService {
                 .toList();
     }
 
+    @Transactional
     public ReporteResponseDTO crear(ReporteRequestDTO dto, User usuario) {
         Point ubicacion = GF.createPoint(new Coordinate(dto.getLongitud(), dto.getLatitud()));
 
@@ -62,19 +68,32 @@ public class ReporteService {
                 .usuario(usuario)
                 .build();
 
-        return toDTO(repository.save(entidad));
+        PuntoInteres guardado = repository.save(entidad);
+
+        registrarEvento(guardado, usuario, TipoEventoReporte.CREACION, "Reporte creado");
+
+        return toDTO(guardado);
     }
 
+    @Transactional
     public ReporteResponseDTO editar(Long id, ReporteUpdateDTO dto) {
         PuntoInteres punto = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte no encontrado"));
 
-        validarAutoria(punto);
+        User autenticado = validarAutoria(punto);
+        EstadoPunto estadoAnterior = punto.getEstado();
 
         punto.setDescripcion(dto.getDescripcion());
         punto.setEstado(dto.getEstado());
 
         PuntoInteres guardado = repository.save(punto);
+
+        if (estadoAnterior != dto.getEstado()) {
+            registrarEvento(guardado, autenticado, TipoEventoReporte.CAMBIO_ESTADO,
+                    "Estado actualizado de " + estadoAnterior + " a " + dto.getEstado());
+        } else {
+            registrarEvento(guardado, autenticado, TipoEventoReporte.EDICION, "Descripción actualizada");
+        }
 
         if (EstadoPunto.RESUELTO.equals(dto.getEstado())) {
             notificacionService.archivarPorReporte(guardado);
@@ -103,13 +122,16 @@ public class ReporteService {
 
         Optional<ReporteVoto> votoExistente = votoRepository.findByUsuarioAndReporte(usuario, punto);
 
+        String descripcionVoto;
         if (votoExistente.isPresent()) {
             ReporteVoto voto = votoExistente.get();
             if (voto.getTipoVoto() == dto.getTipoVoto()) {
                 votoRepository.delete(voto);
+                descripcionVoto = "Voto removido (" + dto.getTipoVoto() + ")";
             } else {
                 voto.setTipoVoto(dto.getTipoVoto());
                 votoRepository.save(voto);
+                descripcionVoto = "Voto actualizado a " + dto.getTipoVoto();
             }
         } else {
             votoRepository.save(ReporteVoto.builder()
@@ -117,15 +139,21 @@ public class ReporteService {
                     .reporte(punto)
                     .tipoVoto(dto.getTipoVoto())
                     .build());
+            descripcionVoto = "Voto registrado: " + dto.getTipoVoto();
         }
+
+        registrarEvento(punto, usuario, TipoEventoReporte.VOTO, descripcionVoto);
 
         long confirmaciones = votoRepository.countByReporteAndTipoVoto(punto, TipoVoto.CONFIRMA);
         long refutaciones = votoRepository.countByReporteAndTipoVoto(punto, TipoVoto.REFUTA);
         long balance = confirmaciones - refutaciones;
 
         if (balance <= -5 && punto.getEstado() != EstadoPunto.DUDOSO) {
+            EstadoPunto estadoAnterior = punto.getEstado();
             punto.setEstado(EstadoPunto.DUDOSO);
             repository.save(punto);
+            registrarEvento(punto, null, TipoEventoReporte.CAMBIO_ESTADO,
+                    "Estado actualizado de " + estadoAnterior + " a DUDOSO por validación comunitaria");
         }
 
         ReporteResponseDTO response = toDTO(punto);
@@ -134,7 +162,26 @@ public class ReporteService {
         return response;
     }
 
-    private void validarAutoria(PuntoInteres punto) {
+    public List<ReporteEventoResponseDTO> obtenerHistorial(Long reporteId) {
+        PuntoInteres reporte = repository.findById(reporteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte no encontrado"));
+
+        return eventoRepository.findByReporteOrderByTimestampDesc(reporte)
+                .stream()
+                .map(this::toEventoDTO)
+                .toList();
+    }
+
+    private void registrarEvento(PuntoInteres reporte, User usuario, TipoEventoReporte tipo, String descripcion) {
+        eventoRepository.save(ReporteEvento.builder()
+                .reporte(reporte)
+                .usuario(usuario)
+                .tipoEvento(tipo)
+                .descripcion(descripcion)
+                .build());
+    }
+
+    private User validarAutoria(PuntoInteres punto) {
         String emailAutenticado = SecurityContextHolder.getContext().getAuthentication().getName();
         User autenticado = userRepository.findByEmail(emailAutenticado)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
@@ -146,6 +193,8 @@ public class ReporteService {
         if (!esDuenio && !esAdmin) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tenés permiso para modificar este reporte");
         }
+
+        return autenticado;
     }
 
     ReporteResponseDTO toDTO(PuntoInteres p) {
@@ -170,6 +219,25 @@ public class ReporteService {
                 .emailUsuario(p.getUsuario() != null ? p.getUsuario().getEmail() : null)
                 .nombreUsuario(nombreUsuario)
                 .fuenteUbicacion(p.getFuenteUbicacion())
+                .build();
+    }
+
+    private ReporteEventoResponseDTO toEventoDTO(ReporteEvento evento) {
+        String nombreUsuario = null;
+        if (evento.getUsuario() != null) {
+            nombreUsuario = evento.getUsuario().getNombre();
+            String apellido = evento.getUsuario().getApellido();
+            if (apellido != null && !apellido.isBlank()) {
+                nombreUsuario += " " + apellido;
+            }
+        }
+
+        return ReporteEventoResponseDTO.builder()
+                .id(evento.getId())
+                .tipoEvento(evento.getTipoEvento())
+                .descripcion(evento.getDescripcion())
+                .nombreUsuario(nombreUsuario)
+                .timestamp(evento.getTimestamp() != null ? evento.getTimestamp().format(ISO_FMT) : null)
                 .build();
     }
 }

@@ -1,5 +1,6 @@
 package _0.motovias_backend.service;
 
+import _0.motovias_backend.dto.ReporteEventoResponseDTO;
 import _0.motovias_backend.dto.ReporteRequestDTO;
 import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.ReporteUpdateDTO;
@@ -7,9 +8,12 @@ import _0.motovias_backend.model.Categoria;
 import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.FuenteUbicacion;
 import _0.motovias_backend.model.PuntoInteres;
+import _0.motovias_backend.model.ReporteEvento;
 import _0.motovias_backend.model.Role;
+import _0.motovias_backend.model.TipoEventoReporte;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.repository.PuntoInteresRepository;
+import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.service.NotificacionService;
 import org.assertj.core.data.Offset;
@@ -32,11 +36,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +55,9 @@ class ReporteServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ReporteEventoRepository eventoRepository;
 
     @Mock
     private NotificacionService notificacionService;
@@ -271,6 +280,112 @@ class ReporteServiceTest {
 
         assertThat(resultado.getEstado()).isEqualTo(EstadoPunto.RESUELTO);
         verify(repository).save(any());
+    }
+
+    // ── Tests de auditoría (Historial de eventos) ─────────────────────────────
+
+    @Test
+    @DisplayName("crear registra un evento de auditoría de tipo CREACION")
+    void crear_registraEventoDeCreacion() {
+        PuntoInteres guardado = puntoGuardado(10L, Categoria.GOMERIA, EstadoPunto.ACTIVO);
+        when(repository.save(any(PuntoInteres.class))).thenReturn(guardado);
+
+        service.crear(reporteDTO("Gomería Norte", "Atiende 24hs", Categoria.GOMERIA, LAT, LON), usuario);
+
+        verify(eventoRepository).save(argThat(evento ->
+                evento.getTipoEvento() == TipoEventoReporte.CREACION
+                        && evento.getUsuario() == usuario
+                        && evento.getReporte() == guardado));
+    }
+
+    @Test
+    @DisplayName("editar sin cambio de estado registra un evento de tipo EDICION")
+    void editar_sinCambioDeEstado_registraEventoDeEdicion() {
+        setAuthentication("rider@motovias.com");
+
+        PuntoInteres punto = puntoGuardado(1L, Categoria.GOMERIA, EstadoPunto.ACTIVO);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(punto));
+        when(userRepository.findByEmail("rider@motovias.com")).thenReturn(Optional.of(usuario));
+        when(repository.save(any(PuntoInteres.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ReporteUpdateDTO dto = new ReporteUpdateDTO();
+        dto.setDescripcion("Corrijo la descripción");
+        dto.setEstado(EstadoPunto.ACTIVO);
+
+        service.editar(1L, dto);
+
+        verify(eventoRepository).save(argThat(evento ->
+                evento.getTipoEvento() == TipoEventoReporte.EDICION && evento.getUsuario() == usuario));
+    }
+
+    @Test
+    @DisplayName("editar con cambio de estado registra un evento de tipo CAMBIO_ESTADO")
+    void editar_conCambioDeEstado_registraEventoDeCambioEstado() {
+        setAuthentication("rider@motovias.com");
+
+        PuntoInteres punto = puntoGuardado(1L, Categoria.GOMERIA, EstadoPunto.ACTIVO);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(punto));
+        when(userRepository.findByEmail("rider@motovias.com")).thenReturn(Optional.of(usuario));
+        when(repository.save(any(PuntoInteres.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ReporteUpdateDTO dto = new ReporteUpdateDTO();
+        dto.setDescripcion("Se resolvió");
+        dto.setEstado(EstadoPunto.RESUELTO);
+
+        service.editar(1L, dto);
+
+        verify(eventoRepository).save(argThat(evento ->
+                evento.getTipoEvento() == TipoEventoReporte.CAMBIO_ESTADO
+                        && evento.getDescripcion().contains("ACTIVO")
+                        && evento.getDescripcion().contains("RESUELTO")));
+    }
+
+    @Test
+    @DisplayName("obtenerHistorial retorna los eventos mapeados en orden cronológico inverso")
+    void obtenerHistorial_retornaEventosMapeados() {
+        PuntoInteres punto = puntoGuardado(1L, Categoria.GOMERIA, EstadoPunto.ACTIVO);
+
+        ReporteEvento evento1 = ReporteEvento.builder()
+                .id(2L)
+                .reporte(punto)
+                .usuario(usuario)
+                .tipoEvento(TipoEventoReporte.EDICION)
+                .descripcion("Descripción actualizada")
+                .timestamp(LocalDateTime.of(2026, 6, 12, 9, 0))
+                .build();
+        ReporteEvento evento2 = ReporteEvento.builder()
+                .id(1L)
+                .reporte(punto)
+                .usuario(usuario)
+                .tipoEvento(TipoEventoReporte.CREACION)
+                .descripcion("Reporte creado")
+                .timestamp(LocalDateTime.of(2026, 6, 11, 12, 0))
+                .build();
+
+        when(repository.findById(1L)).thenReturn(Optional.of(punto));
+        when(eventoRepository.findByReporteOrderByTimestampDesc(punto)).thenReturn(List.of(evento1, evento2));
+
+        List<ReporteEventoResponseDTO> historial = service.obtenerHistorial(1L);
+
+        assertThat(historial).hasSize(2);
+        assertThat(historial.get(0).getTipoEvento()).isEqualTo(TipoEventoReporte.EDICION);
+        assertThat(historial.get(0).getNombreUsuario()).isEqualTo("Juan Perez");
+        assertThat(historial.get(1).getTipoEvento()).isEqualTo(TipoEventoReporte.CREACION);
+    }
+
+    @Test
+    @DisplayName("obtenerHistorial lanza 404 cuando el reporte no existe")
+    void obtenerHistorial_reporteInexistente_lanza404() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.obtenerHistorial(99L))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
+                        .isEqualTo(HttpStatus.NOT_FOUND));
+
+        verify(eventoRepository, never()).findByReporteOrderByTimestampDesc(any());
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────

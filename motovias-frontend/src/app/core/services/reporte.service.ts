@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { EstadoPunto, PuntoInteres, PuntoInteresRequest } from '../models/punto-interes.model';
+import { ReporteEvento } from '../models/reporte-evento.model';
 
 const BASE_URL = 'http://localhost:8080/api/reportes';
 
@@ -32,5 +33,9 @@ export class ReporteService {
 
   votarReporte(id: number, tipoVoto: 'CONFIRMA' | 'REFUTA'): Observable<void> {
     return this.http.post<void>(`${BASE_URL}/${id}/votar`, { tipoVoto });
+  }
+
+  obtenerHistorialReporte(id: number): Observable<ReporteEvento[]> {
+    return this.http.get<ReporteEvento[]>(`${BASE_URL}/${id}/eventos`);
   }
 }

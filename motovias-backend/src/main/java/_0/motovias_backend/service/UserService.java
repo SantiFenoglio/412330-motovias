@@ -8,6 +8,7 @@ import _0.motovias_backend.model.Viaje;
 import _0.motovias_backend.repository.GastoRepository;
 import _0.motovias_backend.repository.NotificacionRepository;
 import _0.motovias_backend.repository.PuntoInteresRepository;
+import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.ReporteVotoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.repository.ViajeParticipanteRepository;
@@ -29,6 +30,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final NotificacionRepository notificacionRepository;
     private final ReporteVotoRepository reporteVotoRepository;
+    private final ReporteEventoRepository reporteEventoRepository;
     private final PuntoInteresRepository puntoInteresRepository;
     private final ViajeParticipanteRepository viajeParticipanteRepository;
     private final GastoRepository gastoRepository;
@@ -66,6 +68,7 @@ public class UserService {
 
         notificacionRepository.deleteByDestinatario(user);
         reporteVotoRepository.deleteByUsuario(user);
+        reporteEventoRepository.deleteByUsuario(user);
 
         List<PuntoInteres> reportesPropios =
                 puntoInteresRepository.findByUsuarioIdOrderByFechaCreacionDesc(user.getId());

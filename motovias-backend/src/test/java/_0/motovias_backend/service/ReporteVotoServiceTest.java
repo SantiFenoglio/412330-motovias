@@ -4,6 +4,7 @@ import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.VotoRequestDTO;
 import _0.motovias_backend.model.*;
 import _0.motovias_backend.repository.PuntoInteresRepository;
+import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.ReporteVotoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.service.NotificacionService;
@@ -40,6 +41,9 @@ class ReporteVotoServiceTest {
 
     @Mock
     private ReporteVotoRepository votoRepository;
+
+    @Mock
+    private ReporteEventoRepository eventoRepository;
 
     @Mock
     private NotificacionService notificacionService;
@@ -104,6 +108,8 @@ class ReporteVotoServiceTest {
         assertThat(resultado.getRefutaciones()).isEqualTo(0L);
         assertThat(resultado.getEstado()).isEqualTo(EstadoPunto.ACTIVO);
         verify(votoRepository).save(argThat(v -> v.getTipoVoto() == TipoVoto.CONFIRMA));
+        verify(eventoRepository).save(argThat(e ->
+                e.getTipoEvento() == TipoEventoReporte.VOTO && e.getUsuario() == votante));
     }
 
     @Test
@@ -144,6 +150,9 @@ class ReporteVotoServiceTest {
         assertThat(resultado.getEstado()).isEqualTo(EstadoPunto.DUDOSO);
         assertThat(resultado.getRefutaciones()).isEqualTo(5L);
         verify(repository).save(argThat(p -> p.getEstado() == EstadoPunto.DUDOSO));
+        verify(eventoRepository).save(argThat(e -> e.getTipoEvento() == TipoEventoReporte.VOTO));
+        verify(eventoRepository).save(argThat(e ->
+                e.getTipoEvento() == TipoEventoReporte.CAMBIO_ESTADO && e.getUsuario() == null));
     }
 
     @Test

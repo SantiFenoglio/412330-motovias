@@ -77,6 +77,35 @@
           </div>
         </dl>
       </p-card>
+
+      <p-card styleClass="historial-card">
+        <h2 class="historial-titulo">Historial de actualizaciones</h2>
+
+        @if (cargandoHistorial()) {
+          <div class="status-state" role="status" aria-live="polite">
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+            <span>Cargando historial...</span>
+          </div>
+        } @else if (historialVista().length === 0) {
+          <p class="historial-vacio">Todavía no hay eventos registrados para este reporte.</p>
+        } @else {
+          <p-timeline [value]="historialVista()" align="left">
+            <ng-template pTemplate="content" let-evento>
+              <div class="evento-item">
+                <div class="evento-header">
+                  <i [class]="evento.tipoIcon" aria-hidden="true"></i>
+                  <span class="evento-tipo">{{ evento.tipoLabel }}</span>
+                </div>
+                <p class="evento-descripcion">{{ evento.descripcion }}</p>
+                <div class="evento-meta">
+                  <span class="evento-usuario">{{ evento.nombreUsuario }}</span>
+                  <span class="evento-fecha">{{ evento.timestamp | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+              </div>
+            </ng-template>
+          </p-timeline>
+        }
+      </p-card>
     }
   </div>
 </main>

@@ -178,3 +178,64 @@
   color: #1e293b;
   word-break: break-word;
 }
+
+/* ── Historial ────────────────────────────────────────────────────────────── */
+
+:host ::ng-deep .historial-card {
+  margin-top: 1.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+:host ::ng-deep .historial-card .p-card-body {
+  padding: 1.5rem;
+}
+
+.historial-titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem;
+}
+
+.historial-vacio {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.evento-item {
+  padding-bottom: 0.75rem;
+}
+
+.evento-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.evento-tipo {
+  line-height: 1.4;
+}
+
+.evento-descripcion {
+  margin: 0.3rem 0 0.4rem;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.evento-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.evento-usuario {
+  font-weight: 600;
+}

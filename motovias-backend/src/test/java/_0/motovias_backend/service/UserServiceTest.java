@@ -10,6 +10,7 @@ import _0.motovias_backend.model.Viaje;
 import _0.motovias_backend.repository.GastoRepository;
 import _0.motovias_backend.repository.NotificacionRepository;
 import _0.motovias_backend.repository.PuntoInteresRepository;
+import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.ReporteVotoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.repository.ViajeParticipanteRepository;
@@ -40,6 +41,7 @@ class UserServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private NotificacionRepository notificacionRepository;
     @Mock private ReporteVotoRepository reporteVotoRepository;
+    @Mock private ReporteEventoRepository reporteEventoRepository;
     @Mock private PuntoInteresRepository puntoInteresRepository;
     @Mock private ViajeParticipanteRepository viajeParticipanteRepository;
     @Mock private GastoRepository gastoRepository;

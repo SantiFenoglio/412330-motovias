@@ -1,5 +1,6 @@
 package _0.motovias_backend.controller;
 
+import _0.motovias_backend.dto.ReporteEventoResponseDTO;
 import _0.motovias_backend.dto.ReporteRequestDTO;
 import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.ReporteUpdateDTO;
@@ -84,5 +85,10 @@ public class ReporteController {
         service.eliminar(id);
         messagingTemplate.convertAndSend("/topic/reportes/eliminar", (Object) id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/eventos")
+    public ResponseEntity<List<ReporteEventoResponseDTO>> obtenerHistorial(@PathVariable Long id) {
+        return ResponseEntity.ok(service.obtenerHistorial(id));
     }
 }
