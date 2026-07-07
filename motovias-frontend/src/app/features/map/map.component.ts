@@ -156,7 +156,7 @@ export class MapComponent implements OnDestroy {
   });
 
   readonly esAdmin = computed(() =>
-    this.authService.currentUser()?.roles.includes('ROLE_ADMIN') ?? false,
+    this.authService.currentUser()?.role === 'ADMIN',
   );
 
   readonly puedeVotar = computed(() => {

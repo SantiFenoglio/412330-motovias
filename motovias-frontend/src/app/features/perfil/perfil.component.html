@@ -310,6 +310,30 @@
     </button>
   </div>
 
+  @if (esAdmin()) {
+    <p-card styleClass="admin-access-card" aria-label="Acceso al panel de administración">
+      <div class="admin-access">
+        <div class="admin-access__text">
+          <h2 class="admin-access__title">
+            <i class="pi pi-shield" aria-hidden="true"></i>
+            Panel de Administración y Moderación
+          </h2>
+          <p class="admin-access__desc">
+            Gestioná el control de calidad de la plataforma: revisá los reportes publicados por
+            la comunidad y actualizá su estado de moderación.
+          </p>
+        </div>
+        <p-button
+          label="Acceder al Panel de Moderación"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          (onClick)="irAlPanelDeModeracion()"
+          aria-label="Acceder al Panel de Moderación de reportes"
+        />
+      </div>
+    </p-card>
+  }
+
   <section class="danger-zone" aria-labelledby="danger-zone-title">
     <h2 id="danger-zone-title" class="danger-zone__title">
       <i class="pi pi-shield" aria-hidden="true"></i>

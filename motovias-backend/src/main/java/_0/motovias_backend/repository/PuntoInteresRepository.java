@@ -4,13 +4,15 @@ import _0.motovias_backend.model.Categoria;
 import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long> {
+public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long>,
+        JpaSpecificationExecutor<PuntoInteres> {
 
     /**
      * Devuelve todos los puntos de interés cuya ubicación esté dentro del radio dado.

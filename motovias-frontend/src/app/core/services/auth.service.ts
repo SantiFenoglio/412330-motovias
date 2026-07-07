@@ -19,10 +19,12 @@ export interface AuthResponse {
   token: string;
 }
 
+export type UserRole = 'USER' | 'ADMIN';
+
 export interface UserInfo {
   email: string;
   nombre: string;
-  roles: string[];
+  role: UserRole;
 }
 
 const TOKEN_KEY = 'auth_token';
@@ -76,10 +78,11 @@ export class AuthService {
       const padding = raw.length % 4;
       const padded = padding ? raw + '='.repeat(4 - padding) : raw;
       const payload = JSON.parse(atob(padded.replace(/-/g, '+').replace(/_/g, '/')));
+      const role: UserRole = payload['role'] === 'ADMIN' ? 'ADMIN' : 'USER';
       return {
         email: payload['sub'] ?? payload['email'] ?? '',
         nombre: payload['nombre'] ?? payload['name'] ?? payload['sub'] ?? '',
-        roles: payload['roles'] ?? payload['authorities'] ?? [],
+        role,
       };
     } catch {
       return null;

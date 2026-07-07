@@ -235,7 +235,7 @@ class ReporteServiceTest {
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
                         .isEqualTo(HttpStatus.FORBIDDEN));
 
-        verify(repository, never()).delete(any());
+        verify(repository, never()).delete(any(PuntoInteres.class));
     }
 
     @Test

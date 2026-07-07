@@ -22,6 +22,20 @@
       </li>
     }
 
+    @if (currentUser()?.role === 'ADMIN') {
+      <li class="nav-item">
+        <a
+          routerLink="/admin/reportes"
+          routerLinkActive="link--active"
+          class="nav-link"
+          aria-label="Ir al panel de administración de reportes"
+        >
+          <i class="pi pi-shield nav-icon" aria-hidden="true"></i>
+          <span class="nav-label">Admin</span>
+        </a>
+      </li>
+    }
+
     <!-- Salir: tab visible solo en mobile -->
     <li class="nav-item logout-tab">
       <button

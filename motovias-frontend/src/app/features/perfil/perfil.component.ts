@@ -24,6 +24,7 @@ import { ToastModule } from 'primeng/toast';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Password } from 'primeng/password';
 import { ConfirmDialog } from 'primeng/confirmdialog';
+import { Card } from 'primeng/card';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 export const PASSWORD_REGEX =
@@ -53,6 +54,7 @@ function confirmPasswordValidator(group: AbstractControl): ValidationErrors | nu
     SkeletonModule,
     Password,
     ConfirmDialog,
+    Card,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './perfil.component.html',
@@ -71,6 +73,8 @@ export class PerfilComponent implements OnInit {
   readonly isSaving = signal(false);
   readonly isLoading = signal(true);
   readonly isDeletingAccount = signal(false);
+
+  readonly esAdmin = computed(() => this.authService.currentUser()?.role === 'ADMIN');
 
   readonly displayName = computed(() => {
     const p = this.profile();
@@ -243,6 +247,10 @@ export class PerfilComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  irAlPanelDeModeracion(): void {
+    this.router.navigate(['/admin/reportes']);
   }
 
   eliminarCuenta(): void {

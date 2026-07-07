@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.*;
 
 /**
@@ -99,7 +101,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$hashed");
         when(userRepository.save(any(User.class))).thenReturn(mockUser);
         // register() construye UserDetails desde el User guardado (sin llamar a userDetailsService)
-        when(jwtService.generateToken(any(UserDetails.class))).thenReturn(TOKEN);
+        when(jwtService.generateToken(anyMap(), any(UserDetails.class))).thenReturn(TOKEN);
 
         // Act
         LoginResponse response = authService.register(request);
@@ -111,7 +113,29 @@ class AuthServiceTest {
 
         verify(userRepository).save(any(User.class));
         verify(passwordEncoder).encode(PASSWORD);
-        verify(jwtService).generateToken(any(UserDetails.class));
+        verify(jwtService).generateToken(anyMap(), any(UserDetails.class));
+    }
+
+    @Test
+    @DisplayName("register: payload con role=ADMIN → el backend lo ignora y persiste con role USER")
+    void register_roleAdminInPayload_isIgnoredAndPersistsAsUser() {
+        // Arrange: un cliente malicioso intenta autoasignarse el rol ADMIN
+        RegisterRequest request = buildRegisterRequest();
+        request.setRole(Role.ADMIN);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$hashed");
+        when(userRepository.save(any(User.class))).thenReturn(mockUser);
+        when(jwtService.generateToken(anyMap(), any(UserDetails.class))).thenReturn(TOKEN);
+
+        // Act
+        LoginResponse response = authService.register(request);
+
+        // Assert: la entidad persistida y la respuesta deben quedar en USER, nunca en ADMIN
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        assertThat(userCaptor.getValue().getRole()).isEqualTo(Role.USER);
+        assertThat(response.getRole()).isEqualTo(Role.USER.name());
     }
 
     @Test
@@ -148,7 +172,7 @@ class AuthServiceTest {
         when(mockAuth.getPrincipal()).thenReturn(mockUserDetails);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(mockAuth);
-        when(jwtService.generateToken(mockUserDetails)).thenReturn(TOKEN);
+        when(jwtService.generateToken(anyMap(), eq(mockUserDetails))).thenReturn(TOKEN);
 
         // Act
         LoginResponse response = authService.login(request);
@@ -160,7 +184,7 @@ class AuthServiceTest {
 
         // El AuthenticationManager debe haberse invocado exactamente una vez
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtService).generateToken(mockUserDetails);
+        verify(jwtService).generateToken(anyMap(), eq(mockUserDetails));
     }
 
     @Test
