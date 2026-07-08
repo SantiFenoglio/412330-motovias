@@ -104,6 +104,7 @@ interface OpcionFiltro<T> {
           <ng-template pTemplate="header">
             <tr>
               <th scope="col">ID</th>
+              <th scope="col">Título</th>
               <th scope="col">Categoría</th>
               <th scope="col">Usuario creador</th>
               <th scope="col">Fecha</th>
@@ -114,13 +115,14 @@ interface OpcionFiltro<T> {
           <ng-template pTemplate="body" let-reporte>
             <tr>
               <td>{{ reporte.id }}</td>
+              <td>{{ reporte.titulo }}</td>
               <td>
                 <span class="categoria-badge">
                   {{ $any(categoriaLabels)[reporte.categoria] ?? reporte.categoria }}
                 </span>
               </td>
               <td>{{ reporte.nombreUsuarioCreador ?? reporte.emailUsuarioCreador ?? '—' }}</td>
-              <td>{{ reporte.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ reporte.fechaCreacion | date: 'dd/MM/yyyy HH:mm':'-0300' }}</td>
               <td class="col-right">{{ reporte.votos }}</td>
               <td>
                 <p-select
@@ -139,7 +141,7 @@ interface OpcionFiltro<T> {
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="6" class="empty-table-row">
+              <td colspan="7" class="empty-table-row">
                 No hay reportes que coincidan con los filtros seleccionados.
               </td>
             </tr>

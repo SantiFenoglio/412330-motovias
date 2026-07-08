@@ -3,6 +3,7 @@ package _0.motovias_backend.service;
 import _0.motovias_backend.dto.PuntoInteresRequestDTO;
 import _0.motovias_backend.dto.PuntoInteresResponseDTO;
 import _0.motovias_backend.model.Categoria;
+import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.repository.PuntoInteresRepository;
@@ -41,7 +42,7 @@ class PuntoInteresServiceTest {
     @Test
     @DisplayName("listarTodos retorna lista vacía cuando no hay puntos")
     void listarTodos_sinDatos_retornaListaVacia() {
-        when(repository.findAll()).thenReturn(List.of());
+        when(repository.findByEstadoNot(EstadoPunto.ELIMINADO)).thenReturn(List.of());
 
         assertThat(service.listarTodos()).isEmpty();
     }
@@ -50,7 +51,7 @@ class PuntoInteresServiceTest {
     @DisplayName("listarTodos mapea coordenadas: getY()=lat, getX()=lon")
     void listarTodos_mapeaCoordenadas_correctamente() {
         PuntoInteres entidad = puntoConCoordenadas(1L, LON, LAT, Categoria.TALLER);
-        when(repository.findAll()).thenReturn(List.of(entidad));
+        when(repository.findByEstadoNot(EstadoPunto.ELIMINADO)).thenReturn(List.of(entidad));
 
         List<PuntoInteresResponseDTO> resultado = service.listarTodos();
 
@@ -69,7 +70,7 @@ class PuntoInteresServiceTest {
         User user = new User();
         user.setEmail("test@motovias.com");
         entidad.setUsuario(user);
-        when(repository.findAll()).thenReturn(List.of(entidad));
+        when(repository.findByEstadoNot(EstadoPunto.ELIMINADO)).thenReturn(List.of(entidad));
 
         PuntoInteresResponseDTO dto = service.listarTodos().get(0);
 

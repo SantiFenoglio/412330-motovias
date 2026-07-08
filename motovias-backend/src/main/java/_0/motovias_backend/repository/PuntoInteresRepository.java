@@ -32,6 +32,7 @@ public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long
                 ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,
                 :radioMetros
             )
+            AND estado <> 'ELIMINADO'
             """, nativeQuery = true)
     List<PuntoInteres> findCercanos(
             @Param("lat") double lat,
@@ -39,7 +40,15 @@ public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long
             @Param("radioMetros") double radioMetros
     );
 
+    // Usado únicamente por la baja de cuenta (UserService.eliminarCuenta) para purgar
+    // físicamente todos los reportes del usuario, incluidos los ya dados de baja lógica.
     List<PuntoInteres> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
+
+    // "Mis Publicaciones": listado personal del usuario, excluyendo los que dio de baja lógica.
+    List<PuntoInteres> findByUsuarioIdAndEstadoNotOrderByFechaCreacionDesc(Long usuarioId, EstadoPunto estado);
+
+    // Fuente de datos pública del mapa: los reportes dados de baja lógica nunca deben renderizarse.
+    List<PuntoInteres> findByEstadoNot(EstadoPunto estado);
 
     @Query("""
             SELECT p FROM PuntoInteres p LEFT JOIN FETCH p.usuario

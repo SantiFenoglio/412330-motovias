@@ -2,10 +2,11 @@ package _0.motovias_backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.locationtech.jts.geom.Point;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "puntos_interes")
@@ -42,11 +43,18 @@ public class PuntoInteres {
     @Column(name = "fuente_ubicacion", nullable = false, columnDefinition = "varchar(255) default 'GPS'")
     private FuenteUbicacion fuenteUbicacion = FuenteUbicacion.GPS;
 
-    @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     private User usuario;
+
+    // No se usa @CreationTimestamp de Hibernate porque toma la hora del reloj por
+    // defecto de la JVM (en Docker, UTC), desfasando el valor guardado respecto de
+    // la hora de pared real de Argentina. Se fuerza la zona explícitamente acá.
+    @PrePersist
+    private void asignarFechaCreacion() {
+        fechaCreacion = ZonedDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).toLocalDateTime();
+    }
 }

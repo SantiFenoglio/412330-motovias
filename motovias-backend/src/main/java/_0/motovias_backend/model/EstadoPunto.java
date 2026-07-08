@@ -5,5 +5,6 @@ public enum EstadoPunto {
     RESUELTO,
     DUDOSO,
     FALSO,
-    DUPLICADO
+    DUPLICADO,
+    ELIMINADO
 }

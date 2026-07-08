@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -31,7 +32,8 @@ public class AdminReporteService {
     private final ReporteEventoRepository eventoRepository;
     private final ReporteVotoRepository votoRepository;
 
-    private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+    private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     public Page<AdminReporteResponseDTO> listar(
             EstadoPunto estado,
@@ -85,8 +87,15 @@ public class AdminReporteService {
                 .estado(p.getEstado())
                 .nombreUsuarioCreador(nombreUsuario)
                 .emailUsuarioCreador(p.getUsuario() != null ? p.getUsuario().getEmail() : null)
-                .fechaCreacion(p.getFechaCreacion() != null ? p.getFechaCreacion().format(ISO_FMT) : null)
+                .fechaCreacion(formatFechaArgentina(p.getFechaCreacion()))
                 .votos(confirmaciones - refutaciones)
                 .build();
+    }
+
+    // Ver comentario equivalente en ReporteService: el LocalDateTime ya viene asignado en
+    // hora de pared de Argentina (ver @PrePersist en PuntoInteres) y acá solo se expone con
+    // offset ISO-8601 explícito, sin alterar el valor.
+    private String formatFechaArgentina(LocalDateTime fecha) {
+        return fecha != null ? fecha.atZone(ZONA_ARGENTINA).format(ISO_FMT) : null;
     }
 }

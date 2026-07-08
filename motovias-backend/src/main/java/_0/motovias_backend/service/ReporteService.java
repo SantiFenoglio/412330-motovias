@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -44,10 +46,11 @@ public class ReporteService {
     private final NotificacionService notificacionService;
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
-    private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+    private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     public List<ReporteResponseDTO> listarMios(User usuario) {
-        return repository.findByUsuarioIdOrderByFechaCreacionDesc(usuario.getId())
+        return repository.findByUsuarioIdAndEstadoNotOrderByFechaCreacionDesc(usuario.getId(), EstadoPunto.ELIMINADO)
                 .stream()
                 .map(this::toDTO)
                 .toList();
@@ -102,13 +105,26 @@ public class ReporteService {
         return toDTO(guardado);
     }
 
-    public void eliminar(Long id) {
+    // Baja lógica: se conserva la fila para no romper la integridad referencial con
+    // reporte_votos ni perder el historial de reporte_eventos. El reporte deja de
+    // renderizarse en el mapa porque las consultas públicas excluyen ELIMINADO.
+    @Transactional
+    public ReporteResponseDTO eliminar(Long id) {
         PuntoInteres punto = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte no encontrado"));
 
-        validarAutoria(punto);
+        User autenticado = validarAutoria(punto);
+        EstadoPunto estadoAnterior = punto.getEstado();
 
-        repository.delete(punto);
+        punto.setEstado(EstadoPunto.ELIMINADO);
+        PuntoInteres guardado = repository.save(punto);
+
+        String actor = Role.ADMIN.equals(autenticado.getRole()) ? "el administrador" : "el propietario";
+        registrarEvento(guardado, autenticado, TipoEventoReporte.CAMBIO_ESTADO,
+                "Reporte dado de baja lógica (de " + estadoAnterior + " a ELIMINADO) por "
+                        + actor + " " + autenticado.getEmail());
+
+        return toDTO(guardado);
     }
 
     @Transactional
@@ -213,7 +229,7 @@ public class ReporteService {
                 .descripcion(p.getDescripcion())
                 .categoria(p.getCategoria())
                 .estado(p.getEstado())
-                .fechaCreacion(p.getFechaCreacion() != null ? p.getFechaCreacion().format(ISO_FMT) : null)
+                .fechaCreacion(formatFechaArgentina(p.getFechaCreacion()))
                 .latitud(p.getUbicacion().getY())
                 .longitud(p.getUbicacion().getX())
                 .emailUsuario(p.getUsuario() != null ? p.getUsuario().getEmail() : null)
@@ -237,7 +253,16 @@ public class ReporteService {
                 .tipoEvento(evento.getTipoEvento())
                 .descripcion(evento.getDescripcion())
                 .nombreUsuario(nombreUsuario)
-                .timestamp(evento.getTimestamp() != null ? evento.getTimestamp().format(ISO_FMT) : null)
+                .timestamp(formatFechaArgentina(evento.getTimestamp()))
                 .build();
+    }
+
+    // Los campos LocalDateTime (asignados en @PrePersist en PuntoInteres/ReporteEvento)
+    // ya representan la hora de pared de Argentina en la que ocurrió el evento. Acá solo
+    // se etiqueta ese valor con el offset ISO-8601 explícito (-03:00), sin alterarlo, para
+    // que el frontend no dependa de la zona horaria del navegador ni del servidor al parsear
+    // la fecha.
+    private String formatFechaArgentina(LocalDateTime fecha) {
+        return fecha != null ? fecha.atZone(ZONA_ARGENTINA).format(ISO_FMT) : null;
     }
 }

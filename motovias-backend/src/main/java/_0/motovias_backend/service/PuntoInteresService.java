@@ -2,6 +2,7 @@ package _0.motovias_backend.service;
 
 import _0.motovias_backend.dto.PuntoInteresRequestDTO;
 import _0.motovias_backend.dto.PuntoInteresResponseDTO;
+import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.repository.PuntoInteresRepository;
@@ -27,7 +28,7 @@ public class PuntoInteresService {
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     public List<PuntoInteresResponseDTO> listarTodos() {
-        return repository.findAll().stream()
+        return repository.findByEstadoNot(EstadoPunto.ELIMINADO).stream()
                 .map(this::toDTO)
                 .toList();
     }

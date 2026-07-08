@@ -81,10 +81,10 @@ public class ReporteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        service.eliminar(id);
+    public ResponseEntity<ReporteResponseDTO> eliminar(@PathVariable Long id) {
+        ReporteResponseDTO actualizado = service.eliminar(id);
         messagingTemplate.convertAndSend("/topic/reportes/eliminar", (Object) id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(actualizado);
     }
 
     @GetMapping("/{id}/eventos")

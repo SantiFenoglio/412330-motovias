@@ -195,6 +195,23 @@ class ReporteServiceTest {
         assertThat(resultado.getFuenteUbicacion()).isEqualTo(FuenteUbicacion.GPS);
     }
 
+    // ── Tests de listarMios ──────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("listarMios consulta el repositorio excluyendo los reportes dados de baja lógica")
+    void listarMios_excluyeReportesEliminados() {
+        PuntoInteres activo = puntoGuardado(1L, Categoria.GOMERIA, EstadoPunto.ACTIVO);
+        when(repository.findByUsuarioIdAndEstadoNotOrderByFechaCreacionDesc(usuario.getId(), EstadoPunto.ELIMINADO))
+                .thenReturn(List.of(activo));
+
+        List<ReporteResponseDTO> resultado = service.listarMios(usuario);
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getEstado()).isEqualTo(EstadoPunto.ACTIVO);
+        verify(repository).findByUsuarioIdAndEstadoNotOrderByFechaCreacionDesc(usuario.getId(), EstadoPunto.ELIMINADO);
+        verify(repository, never()).findByUsuarioIdOrderByFechaCreacionDesc(any());
+    }
+
     // ── Tests de seguridad (US-25) ───────────────────────────────────────────
 
     @Test
@@ -235,7 +252,33 @@ class ReporteServiceTest {
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
                         .isEqualTo(HttpStatus.FORBIDDEN));
 
+        verify(repository, never()).save(any(PuntoInteres.class));
+    }
+
+    @Test
+    @DisplayName("eliminar realiza baja lógica: setea ELIMINADO, guarda y audita el evento")
+    void eliminar_propietarioAutorizado_marcaEstadoEliminadoYAudita() {
+        setAuthentication("rider@motovias.com");
+
+        PuntoInteres punto = puntoGuardado(1L, Categoria.GOMERIA, EstadoPunto.ACTIVO);
+        punto.setUsuario(usuario);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(punto));
+        when(userRepository.findByEmail("rider@motovias.com")).thenReturn(Optional.of(usuario));
+        when(repository.save(any(PuntoInteres.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ReporteResponseDTO resultado = service.eliminar(1L);
+
+        // La entidad nunca se borra físicamente: se conserva vía save() con estado ELIMINADO
+        assertThat(resultado.getEstado()).isEqualTo(EstadoPunto.ELIMINADO);
         verify(repository, never()).delete(any(PuntoInteres.class));
+        verify(repository, never()).deleteById(any());
+        verify(repository).save(argThat(p -> p.getEstado() == EstadoPunto.ELIMINADO));
+
+        // Queda auditado en el historial del reporte
+        verify(eventoRepository).save(argThat(evento ->
+                evento.getTipoEvento() == TipoEventoReporte.CAMBIO_ESTADO
+                        && evento.getDescripcion().contains("ELIMINADO")));
     }
 
     @Test

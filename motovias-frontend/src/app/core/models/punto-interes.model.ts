@@ -4,7 +4,7 @@ export type Categoria =
   | 'ALERTA_SOS'
   | 'PUNTO_INTERES';
 
-export type EstadoPunto = 'ACTIVO' | 'RESUELTO' | 'DUDOSO' | 'FALSO' | 'DUPLICADO';
+export type EstadoPunto = 'ACTIVO' | 'RESUELTO' | 'DUDOSO' | 'FALSO' | 'DUPLICADO' | 'ELIMINADO';
 
 export interface CategoriaConfig {
   label: string;
@@ -37,6 +37,7 @@ export const ESTADO_CONFIG: Record<EstadoPunto, EstadoConfig> = {
   DUDOSO:     { label: 'Dudoso',     color: '#b45309', bg: '#fef3c7' },
   FALSO:      { label: 'Falso',      color: '#b91c1c', bg: '#fee2e2' },
   DUPLICADO:  { label: 'Duplicado',  color: '#525252', bg: '#e5e5e5' },
+  ELIMINADO:  { label: 'Eliminado',  color: '#4c1d95', bg: '#ede9fe' },
 };
 
 export const TODOS_LOS_ESTADOS: EstadoPunto[] = [
@@ -45,6 +46,7 @@ export const TODOS_LOS_ESTADOS: EstadoPunto[] = [
   'DUDOSO',
   'FALSO',
   'DUPLICADO',
+  'ELIMINADO',
 ];
 
 export interface PuntoInteres {
