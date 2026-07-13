@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { MessageService, PrimeTemplate } from 'primeng/api';
@@ -6,7 +6,12 @@ import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
 import { Toast } from 'primeng/toast';
+import { UIChart } from 'primeng/chart';
 import { AdminService, AdminReporteItem } from '../../../core/services/admin.service';
+import {
+  AdminMetricasService,
+  MetricasResponse,
+} from '../../../core/services/admin-metricas.service';
 import {
   Categoria,
   CATEGORY_CONFIG,
@@ -25,7 +30,7 @@ interface OpcionFiltro<T> {
   selector: 'app-admin-reportes',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [MessageService],
-  imports: [FormsModule, DatePipe, TableModule, Select, DatePicker, Toast, PrimeTemplate],
+  imports: [FormsModule, DatePipe, TableModule, Select, DatePicker, Toast, PrimeTemplate, UIChart],
   template: `
     <div class="page-shell">
       <header class="page-header">
@@ -37,6 +42,65 @@ interface OpcionFiltro<T> {
           Gestioná el estado de los reportes publicados por la comunidad.
         </p>
       </header>
+
+      <section class="dashboard" aria-label="Métricas de actividad de la plataforma">
+        <div class="metric-cards">
+          <div class="metric-card">
+            <i class="pi pi-map-marker metric-card__icon" aria-hidden="true"></i>
+            <div class="metric-card__body">
+              <span class="metric-card__value">{{ metricas()?.totalActivos ?? '—' }}</span>
+              <span class="metric-card__label">Reportes activos</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <i class="pi pi-calendar metric-card__icon" aria-hidden="true"></i>
+            <div class="metric-card__body">
+              <span class="metric-card__value">{{ metricas()?.reportesUltimaSemana ?? '—' }}</span>
+              <span class="metric-card__label">Reportes esta semana</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <i class="pi pi-user-plus metric-card__icon" aria-hidden="true"></i>
+            <div class="metric-card__body">
+              <span class="metric-card__value">{{ metricas()?.usuariosNuevosMes ?? '—' }}</span>
+              <span class="metric-card__label">Nuevos usuarios este mes</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-panels">
+          <div class="chart-panel">
+            <h2 class="panel-title">Reportes por categoría</h2>
+            @if (loadingMetricas()) {
+              <p class="panel-empty">Cargando métricas...</p>
+            } @else if (!chartData()) {
+              <p class="panel-empty">No hay datos suficientes para graficar.</p>
+            } @else {
+              <p-chart type="bar" [data]="chartData()" [options]="chartOptions" height="16rem" />
+            }
+          </div>
+
+          <div class="zonas-panel">
+            <h2 class="panel-title">Zonas con más actividad</h2>
+            @if (loadingMetricas()) {
+              <p class="panel-empty">Cargando métricas...</p>
+            } @else if (!metricas()?.zonasConMasActividad?.length) {
+              <p class="panel-empty">Sin datos geoespaciales agregados disponibles.</p>
+            } @else {
+              <ol class="zonas-list">
+                @for (zona of metricas()!.zonasConMasActividad; track $index) {
+                  <li class="zona-item">
+                    <span class="zona-item__coords">
+                      {{ zona.latitud?.toFixed(4) ?? '—' }}, {{ zona.longitud?.toFixed(4) ?? '—' }}
+                    </span>
+                    <span class="zona-item__cantidad">{{ zona.cantidad }} reportes</span>
+                  </li>
+                }
+              </ol>
+            }
+          </div>
+        </div>
+      </section>
 
       <section class="filtros" aria-label="Filtros de búsqueda de reportes">
         <div class="filtro-campo">
@@ -178,6 +242,118 @@ interface OpcionFiltro<T> {
       margin: 0;
     }
 
+    .dashboard {
+      margin-bottom: 1.5rem;
+    }
+
+    .metric-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .metric-card {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.125rem 1.25rem;
+    }
+
+    .metric-card__icon {
+      font-size: 1.5rem;
+      color: #3b82f6;
+      background: #eff6ff;
+      border-radius: 10px;
+      padding: 0.625rem;
+    }
+
+    .metric-card__body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-card__value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    .metric-card__label {
+      font-size: 0.8125rem;
+      color: #64748b;
+    }
+
+    .dashboard-panels {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+    }
+
+    .chart-panel,
+    .zonas-panel {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .panel-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 1rem;
+    }
+
+    .panel-empty {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      font-style: italic;
+      margin: 0;
+    }
+
+    .zonas-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+
+    .zona-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      padding-bottom: 0.625rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.8125rem;
+    }
+
+    .zona-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .zona-item__coords {
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .zona-item__cantidad {
+      color: #64748b;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-panels {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .filtros {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -235,6 +411,7 @@ interface OpcionFiltro<T> {
 })
 export class AdminReportesComponent implements OnInit {
   private readonly adminService = inject(AdminService);
+  private readonly metricasService = inject(AdminMetricasService);
   private readonly messageService = inject(MessageService);
 
   readonly reportes = signal<AdminReporteItem[]>([]);
@@ -243,6 +420,32 @@ export class AdminReportesComponent implements OnInit {
   readonly rows = signal(10);
   readonly first = signal(0);
   readonly cambiandoEstadoId = signal<number | null>(null);
+
+  readonly metricas = signal<MetricasResponse | null>(null);
+  readonly loadingMetricas = signal(false);
+
+  readonly chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+  };
+
+  readonly chartData = computed(() => {
+    const datos = this.metricas()?.reportesPorCategoria;
+    if (!datos || datos.length === 0) return null;
+
+    return {
+      labels: datos.map((d) => this.categoriaLabels[d.categoria] ?? d.categoria),
+      datasets: [
+        {
+          label: 'Reportes',
+          data: datos.map((d) => d.cantidad),
+          backgroundColor: datos.map((d) => CATEGORY_CONFIG[d.categoria]?.color ?? '#3b82f6'),
+        },
+      ],
+    };
+  });
 
   readonly filtroCategoria = signal<Categoria | null>(null);
   readonly filtroEstado = signal<EstadoPunto | null>(null);
@@ -264,6 +467,20 @@ export class AdminReportesComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
+    this.cargarMetricas();
+  }
+
+  private cargarMetricas(): void {
+    this.loadingMetricas.set(true);
+    this.metricasService.obtenerMetricas().subscribe({
+      next: (metricas) => {
+        this.metricas.set(metricas);
+        this.loadingMetricas.set(false);
+      },
+      error: () => {
+        this.loadingMetricas.set(false);
+      },
+    });
   }
 
   onLazyLoad(event: TableLazyLoadEvent): void {

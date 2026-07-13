@@ -3,6 +3,10 @@ package _0.motovias_backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -49,4 +53,14 @@ public class User {
 
     @Column(name = "direccion")
     private String direccion;
+
+    @Column(name = "fecha_creacion", updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    // Misma convención que PuntoInteres.asignarFechaCreacion(): se fuerza la zona horaria
+    // de Argentina explícitamente en vez de usar @CreationTimestamp, que tomaría UTC en Docker.
+    @PrePersist
+    private void asignarFechaCreacion() {
+        fechaCreacion = ZonedDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).toLocalDateTime();
+    }
 }

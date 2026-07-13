@@ -15,6 +15,9 @@ public interface ViajeParticipanteRepository extends JpaRepository<ViajeParticip
 
     long countByViaje(Viaje viaje);
 
+    // Dashboard personal — cantidad de caravanas en las que el usuario participa.
+    long countByUsuario(User usuario);
+
     boolean existsByViajeAndUsuario(Viaje viaje, User usuario);
 
     Optional<ViajeParticipante> findByViajeAndUsuario(Viaje viaje, User usuario);

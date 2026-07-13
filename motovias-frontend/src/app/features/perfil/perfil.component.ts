@@ -16,7 +16,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { TipoMotocicleta, UserProfile, UserService } from '../../core/services/user.service';
+import {
+  DashboardResponse,
+  TipoMotocicleta,
+  UserProfile,
+  UserService,
+} from '../../core/services/user.service';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -25,10 +30,18 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { Password } from 'primeng/password';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { Card } from 'primeng/card';
+import { UIChart } from 'primeng/chart';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 export const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+const MESES_LABEL = [
+  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+];
+
+const MESES_HISTORIAL = 6;
 
 function optionalPasswordValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return null;
@@ -55,6 +68,7 @@ function confirmPasswordValidator(group: AbstractControl): ValidationErrors | nu
     Password,
     ConfirmDialog,
     Card,
+    UIChart,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './perfil.component.html',
@@ -74,7 +88,44 @@ export class PerfilComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly isDeletingAccount = signal(false);
 
+  readonly dashboard = signal<DashboardResponse | null>(null);
+  readonly isLoadingDashboard = signal(true);
+
   readonly esAdmin = computed(() => this.authService.currentUser()?.role === 'ADMIN');
+
+  readonly tieneDatosMedicos = computed(() => {
+    const p = this.profile();
+    return !!(p?.tipoSangre || p?.contactoEmergenciaNombre || p?.contactoEmergenciaTelefono);
+  });
+
+  readonly chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+  };
+
+  readonly chartData = computed(() => {
+    const dash = this.dashboard();
+    if (!dash) return null;
+
+    const meses = this.ultimosSeisMeses();
+    const porClave = new Map(dash.aportesPorMes.map((a) => [`${a.anio}-${a.mes}`, a.cantidad]));
+
+    return {
+      labels: meses.map((m) => `${MESES_LABEL[m.mes - 1]} ${m.anio}`),
+      datasets: [
+        {
+          label: 'Reportes creados',
+          data: meses.map((m) => porClave.get(`${m.anio}-${m.mes}`) ?? 0),
+          fill: false,
+          borderColor: '#3b82f6',
+          backgroundColor: '#3b82f6',
+          tension: 0.35,
+        },
+      ],
+    };
+  });
 
   readonly displayName = computed(() => {
     const p = this.profile();
@@ -181,6 +232,26 @@ export class PerfilComponent implements OnInit {
         }
       },
     });
+
+    this.userService.getMiDashboard().subscribe({
+      next: (dashboard) => {
+        this.dashboard.set(dashboard);
+        this.isLoadingDashboard.set(false);
+      },
+      error: () => {
+        this.isLoadingDashboard.set(false);
+      },
+    });
+  }
+
+  private ultimosSeisMeses(): { anio: number; mes: number }[] {
+    const ahora = new Date();
+    const meses: { anio: number; mes: number }[] = [];
+    for (let i = MESES_HISTORIAL - 1; i >= 0; i--) {
+      const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+      meses.push({ anio: fecha.getFullYear(), mes: fecha.getMonth() + 1 });
+    }
+    return meses;
   }
 
   startEdit(): void {

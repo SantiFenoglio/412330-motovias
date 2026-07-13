@@ -22,4 +22,9 @@ public interface ReporteVotoRepository extends JpaRepository<ReporteVoto, Long> 
     @Modifying
     @Query("DELETE FROM ReporteVoto v WHERE v.reporte = :reporte")
     void deleteByReporte(@Param("reporte") PuntoInteres reporte);
+
+    // Dashboard personal — total de votos de un tipo recibidos en todas las publicaciones
+    // creadas por el usuario (no los votos que el usuario emitió).
+    @Query("SELECT COUNT(v) FROM ReporteVoto v WHERE v.reporte.usuario = :usuario AND v.tipoVoto = :tipoVoto")
+    long countByReporteUsuarioAndTipoVoto(@Param("usuario") User usuario, @Param("tipoVoto") TipoVoto tipoVoto);
 }

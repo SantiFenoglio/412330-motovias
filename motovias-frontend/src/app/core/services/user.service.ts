@@ -28,6 +28,19 @@ export interface UserProfileUpdate {
   newPassword?: string | null;
 }
 
+export interface AporteMensual {
+  anio: number;
+  mes: number;
+  cantidad: number;
+}
+
+export interface DashboardResponse {
+  reportesActivos: number;
+  votosRecibidos: number;
+  caravanasParticipando: number;
+  aportesPorMes: AporteMensual[];
+}
+
 const BASE_URL = 'http://localhost:8080';
 
 @Injectable({ providedIn: 'root' })
@@ -44,5 +57,9 @@ export class UserService {
 
   deleteAccount(): Observable<void> {
     return this.http.delete<void>(`${BASE_URL}/api/usuarios/mi-cuenta`);
+  }
+
+  getMiDashboard(): Observable<DashboardResponse> {
+    return this.http.get<DashboardResponse>(`${BASE_URL}/api/usuarios/mi-dashboard`);
   }
 }

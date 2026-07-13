@@ -1,8 +1,12 @@
 package _0.motovias_backend.service;
 
+import _0.motovias_backend.dto.AporteMensualDTO;
+import _0.motovias_backend.dto.DashboardResponseDTO;
 import _0.motovias_backend.dto.UserProfileResponseDTO;
 import _0.motovias_backend.dto.UserProfileUpdateDTO;
+import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
+import _0.motovias_backend.model.TipoVoto;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.model.Viaje;
 import _0.motovias_backend.repository.GastoRepository;
@@ -20,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
@@ -35,6 +42,9 @@ public class UserService {
     private final ViajeParticipanteRepository viajeParticipanteRepository;
     private final GastoRepository gastoRepository;
     private final ViajeRepository viajeRepository;
+
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+    private static final int MESES_HISTORIAL_DASHBOARD = 6;
 
     public UserProfileResponseDTO getProfile(String email) {
         User user = findByEmailOrThrow(email);
@@ -88,6 +98,36 @@ public class UserService {
         viajeRepository.deleteAll(viajesPropios);
 
         userRepository.delete(user);
+    }
+
+    public DashboardResponseDTO obtenerMiDashboard(String email) {
+        User usuario = findByEmailOrThrow(email);
+
+        long reportesActivos = puntoInteresRepository.countByUsuarioIdAndEstado(usuario.getId(), EstadoPunto.ACTIVO);
+        long confirmaciones = reporteVotoRepository.countByReporteUsuarioAndTipoVoto(usuario, TipoVoto.CONFIRMA);
+        long refutaciones = reporteVotoRepository.countByReporteUsuarioAndTipoVoto(usuario, TipoVoto.REFUTA);
+        long caravanasParticipando = viajeParticipanteRepository.countByUsuario(usuario);
+
+        LocalDate inicioSemestre = ZonedDateTime.now(ZONA_ARGENTINA).toLocalDate()
+                .withDayOfMonth(1)
+                .minusMonths(MESES_HISTORIAL_DASHBOARD - 1L);
+
+        List<AporteMensualDTO> aportesPorMes = puntoInteresRepository
+                .countMensualPorUsuario(usuario, inicioSemestre.atStartOfDay())
+                .stream()
+                .map(p -> AporteMensualDTO.builder()
+                        .anio(p.getAnio())
+                        .mes(p.getMes())
+                        .cantidad(p.getCantidad())
+                        .build())
+                .toList();
+
+        return DashboardResponseDTO.builder()
+                .reportesActivos(reportesActivos)
+                .votosRecibidos(confirmaciones - refutaciones)
+                .caravanasParticipando(caravanasParticipando)
+                .aportesPorMes(aportesPorMes)
+                .build();
     }
 
     private User findByEmailOrThrow(String email) {

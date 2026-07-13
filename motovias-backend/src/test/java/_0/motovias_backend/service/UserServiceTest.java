@@ -1,10 +1,13 @@
 package _0.motovias_backend.service;
 
+import _0.motovias_backend.dto.DashboardResponseDTO;
 import _0.motovias_backend.dto.UserProfileResponseDTO;
 import _0.motovias_backend.dto.UserProfileUpdateDTO;
+import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.Role;
 import _0.motovias_backend.model.TipoMotocicleta;
+import _0.motovias_backend.model.TipoVoto;
 import _0.motovias_backend.model.User;
 import _0.motovias_backend.model.Viaje;
 import _0.motovias_backend.repository.GastoRepository;
@@ -15,6 +18,7 @@ import _0.motovias_backend.repository.ReporteVotoRepository;
 import _0.motovias_backend.repository.UserRepository;
 import _0.motovias_backend.repository.ViajeParticipanteRepository;
 import _0.motovias_backend.repository.ViajeRepository;
+import _0.motovias_backend.repository.projection.AporteMensualProjection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -247,5 +252,60 @@ class UserServiceTest {
 
         verify(userRepository, never()).delete(any());
         verifyNoInteractions(notificacionRepository, reporteVotoRepository, viajeParticipanteRepository, gastoRepository);
+    }
+
+    @Test
+    @DisplayName("obtenerMiDashboard: usuario con actividad → agrega reportes, votos netos, caravanas y aportes mensuales")
+    void obtenerMiDashboard_usuarioConActividad_retornaMetricasAgregadas() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(mockUser));
+        when(puntoInteresRepository.countByUsuarioIdAndEstado(mockUser.getId(), EstadoPunto.ACTIVO))
+                .thenReturn(5L);
+        when(reporteVotoRepository.countByReporteUsuarioAndTipoVoto(mockUser, TipoVoto.CONFIRMA))
+                .thenReturn(8L);
+        when(reporteVotoRepository.countByReporteUsuarioAndTipoVoto(mockUser, TipoVoto.REFUTA))
+                .thenReturn(2L);
+        when(viajeParticipanteRepository.countByUsuario(mockUser)).thenReturn(3L);
+        when(puntoInteresRepository.countMensualPorUsuario(eq(mockUser), any(LocalDateTime.class)))
+                .thenReturn(List.of(new AporteMensualProjectionStub(2026, 6, 4L)));
+
+        DashboardResponseDTO result = userService.obtenerMiDashboard(EMAIL);
+
+        assertThat(result.getReportesActivos()).isEqualTo(5L);
+        assertThat(result.getVotosRecibidos()).isEqualTo(6L);
+        assertThat(result.getCaravanasParticipando()).isEqualTo(3L);
+        assertThat(result.getAportesPorMes()).hasSize(1);
+        assertThat(result.getAportesPorMes().get(0).getAnio()).isEqualTo(2026);
+        assertThat(result.getAportesPorMes().get(0).getMes()).isEqualTo(6);
+        assertThat(result.getAportesPorMes().get(0).getCantidad()).isEqualTo(4L);
+    }
+
+    @Test
+    @DisplayName("obtenerMiDashboard: usuario inexistente → lanza ResponseStatusException 404 NOT_FOUND")
+    void obtenerMiDashboard_usuarioInexistente_throws404() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.obtenerMiDashboard(EMAIL))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(puntoInteresRepository, reporteVotoRepository, viajeParticipanteRepository);
+    }
+
+    private record AporteMensualProjectionStub(int anio, int mes, long cantidad) implements AporteMensualProjection {
+        @Override
+        public int getAnio() {
+            return anio;
+        }
+
+        @Override
+        public int getMes() {
+            return mes;
+        }
+
+        @Override
+        public long getCantidad() {
+            return cantidad;
+        }
     }
 }

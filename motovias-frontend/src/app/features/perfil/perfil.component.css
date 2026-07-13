@@ -1,7 +1,51 @@
 .page-shell {
-  max-width: 40rem;
+  max-width: 68rem;
   margin: 0 auto;
-  padding: 2rem 1.25rem;
+  padding: 2rem 1.25rem 3rem;
+}
+
+/* Grilla reactiva de 12 columnas (subconjunto propio de PrimeFlex, sin la
+   dependencia completa) para la maquetación en dos columnas del dashboard. */
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.5rem;
+}
+
+.grid > div {
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.col-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+
+.sm\:col-4,
+.md\:col-4,
+.md\:col-8 {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 576px) {
+  .sm\:col-4 {
+    flex: 0 0 33.3333%;
+    max-width: 33.3333%;
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:col-4 {
+    flex: 0 0 33.3333%;
+    max-width: 33.3333%;
+  }
+
+  .md\:col-8 {
+    flex: 0 0 66.6667%;
+    max-width: 66.6667%;
+  }
 }
 
 .page-header {
@@ -141,6 +185,13 @@
   color: #475569;
 }
 
+/* Formulario de edición: ancho acotado para mantener el layout limpio incluso
+   con el page-shell ensanchado para acomodar la grilla del dashboard. */
+.profile-card--editing {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
 /* Form */
 .edit-form {
   margin-top: 1.25rem;
@@ -258,12 +309,24 @@
   flex-wrap: wrap;
 }
 
-/* Logout */
-.actions {
+/* Acciones de identidad: Editar Perfil y Cerrar sesión */
+.identity-actions {
   display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+::global(.identity-actions__btn.p-button) {
+  width: 100%;
+  justify-content: center;
 }
 
 .btn-logout {
+  width: 100%;
+  justify-content: center;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -291,10 +354,6 @@
 }
 
 /* Acceso al panel de administración */
-.admin-access-card {
-  margin-top: 2rem;
-}
-
 .admin-access {
   display: flex;
   align-items: center;
@@ -319,6 +378,107 @@
   margin: 0;
   line-height: 1.5;
   max-width: 32rem;
+}
+
+/* Dashboard del Motoquero — grilla de métricas rápidas */
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.125rem 1.25rem;
+  height: 100%;
+}
+
+.metric-card__icon {
+  font-size: 1.5rem;
+  color: #3b82f6;
+  background: #eff6ff;
+  border-radius: 10px;
+  padding: 0.625rem;
+}
+
+.metric-card__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-card__value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.metric-card__label {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+/* Paneles del dashboard: gráfico y seguridad en ruta */
+.panel-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1rem;
+}
+
+.panel-empty {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+}
+
+::global(.chart-card),
+::global(.security-card),
+::global(.admin-access-card) {
+  margin-bottom: 1.5rem;
+}
+
+.security-card__title {
+  color: #b91c1c;
+}
+
+.security-card__title .pi {
+  color: #b91c1c;
+}
+
+.security-card__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.security-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.security-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.security-item dt {
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.security-item dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: right;
 }
 
 /* Danger zone */

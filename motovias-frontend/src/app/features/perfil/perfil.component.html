@@ -17,340 +17,400 @@
         <p-skeleton width="14rem" height="0.875rem" />
       </div>
     </div>
-  } @else {
-    <section
-      class="profile-card"
-      [class.profile-card--editing]="isEditing()"
-      aria-label="Información de la cuenta"
-    >
+  } @else if (isEditing()) {
+    <section class="profile-card profile-card--editing" aria-label="Edición de perfil">
       <div class="card-top">
         <div class="avatar" aria-hidden="true">{{ initials() }}</div>
-
-        @if (!isEditing()) {
-          <div class="profile-info">
-            <p class="profile-name">{{ displayName() }}</p>
-            <p class="profile-email">{{ profile()?.email }}</p>
-            @if (tipoMotoLabel()) {
-              <p class="profile-moto">
-                <i class="pi pi-car" aria-hidden="true"></i>
-                {{ tipoMotoLabel() }}
-              </p>
-            }
-          </div>
-          <p-button
-            icon="pi pi-pencil"
-            label="Editar"
-            severity="secondary"
-            [outlined]="true"
-            size="small"
-            (onClick)="startEdit()"
-            aria-label="Editar perfil"
-          />
-        } @else {
-          <span class="editing-label">Editando tu perfil</span>
-        }
+        <span class="editing-label">Editando tu perfil</span>
       </div>
 
-      @if (!isEditing() && (profile()?.tipoSangre || profile()?.contactoEmergenciaNombre || profile()?.direccion)) {
-        <dl class="profile-extras">
-          @if (profile()?.tipoSangre) {
-            <div class="extra-item">
-              <dt><i class="pi pi-heart-fill" aria-hidden="true"></i> Tipo de sangre</dt>
-              <dd>{{ profile()?.tipoSangre }}</dd>
-            </div>
-          }
-          @if (profile()?.contactoEmergenciaNombre) {
-            <div class="extra-item">
-              <dt><i class="pi pi-phone" aria-hidden="true"></i> Contacto de emergencia</dt>
-              <dd>
-                {{ profile()?.contactoEmergenciaNombre }}
-                @if (profile()?.contactoEmergenciaTelefono) {
-                  &mdash; {{ profile()?.contactoEmergenciaTelefono }}
-                }
-              </dd>
-            </div>
-          }
-          @if (profile()?.direccion) {
-            <div class="extra-item">
-              <dt><i class="pi pi-map-marker" aria-hidden="true"></i> Dirección</dt>
-              <dd>{{ profile()?.direccion }}</dd>
-            </div>
-          }
-        </dl>
-      }
+      <form
+        [formGroup]="form"
+        (ngSubmit)="saveProfile()"
+        class="edit-form"
+        novalidate
+        aria-label="Formulario de edición de perfil"
+      >
 
-      @if (isEditing()) {
-        <form
-          [formGroup]="form"
-          (ngSubmit)="saveProfile()"
-          class="edit-form"
-          novalidate
-          aria-label="Formulario de edición de perfil"
-        >
+        <!-- ── Información personal ── -->
+        <p class="form-section-title">Información personal</p>
 
-          <!-- ── Información personal ── -->
-          <p class="form-section-title">Información personal</p>
-
-          <div class="form-grid">
-            <div class="field">
-              <label for="nombre" class="field-label">Nombre *</label>
-              <input
-                pInputText
-                id="nombre"
-                formControlName="nombre"
-                autocomplete="given-name"
-                aria-required="true"
-                [attr.aria-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched ? 'true' : null"
-                aria-describedby="nombre-error"
-              />
-              @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {
-                <small id="nombre-error" class="field-error" role="alert">
-                  El nombre debe tener al menos 3 caracteres.
-                </small>
-              }
-            </div>
-
-            <div class="field">
-              <label for="apellido" class="field-label">Apellido</label>
-              <input
-                pInputText
-                id="apellido"
-                formControlName="apellido"
-                autocomplete="family-name"
-              />
-            </div>
-
-            <div class="field">
-              <label for="tipoMoto" class="field-label">Tipo de moto</label>
-              <p-select
-                inputId="tipoMoto"
-                formControlName="tipoMotocicleta"
-                [options]="tipoMotocicletaOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Seleccioná un tipo"
-                [showClear]="true"
-                [style]="{ width: '100%' }"
-              />
-            </div>
-
-            <div class="field">
-              <label for="tipoSangre" class="field-label">
-                <i class="pi pi-heart-fill" aria-hidden="true" style="color:#ef4444;font-size:0.75rem"></i>
-                Tipo de sangre
-              </label>
-              <p-select
-                inputId="tipoSangre"
-                formControlName="tipoSangre"
-                [options]="tipoSangreOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Seleccioná tu tipo"
-                [showClear]="true"
-                [style]="{ width: '100%' }"
-              />
-            </div>
-
-            <div class="field field--full">
-              <label for="direccion" class="field-label">Dirección</label>
-              <input
-                pInputText
-                id="direccion"
-                formControlName="direccion"
-                autocomplete="street-address"
-                placeholder="Ej: Av. Colón 123, Córdoba"
-              />
-            </div>
-          </div>
-
-          <hr class="form-divider" aria-hidden="true" />
-
-          <!-- ── Contacto de emergencia ── -->
-          <p class="form-section-title">
-            <i class="pi pi-phone" aria-hidden="true"></i>
-            Contacto de emergencia
-          </p>
-
-          <div class="form-grid">
-            <div class="field">
-              <label for="contactoNombre" class="field-label">Nombre del contacto</label>
-              <input
-                pInputText
-                id="contactoNombre"
-                formControlName="contactoEmergenciaNombre"
-                autocomplete="off"
-                placeholder="Ej: Juan Pérez"
-              />
-            </div>
-
-            <div class="field">
-              <label for="contactoTel" class="field-label">Teléfono</label>
-              <input
-                pInputText
-                id="contactoTel"
-                type="tel"
-                formControlName="contactoEmergenciaTelefono"
-                autocomplete="off"
-                placeholder="Ej: 3512345678"
-              />
-            </div>
-          </div>
-
-          <hr class="form-divider" aria-hidden="true" />
-
-          <!-- ── Seguridad ── -->
-          <p class="form-section-title">
-            <i class="pi pi-lock" aria-hidden="true"></i>
-            Cambiar contraseña
-            <span class="form-section-hint">(opcional)</span>
-          </p>
-
-          <div class="form-grid">
-            <div class="field field--full">
-              <label for="newPassword" class="field-label">Nueva contraseña</label>
-              <p-password
-                inputId="newPassword"
-                formControlName="newPassword"
-                [feedback]="false"
-                [toggleMask]="true"
-                [style]="{ width: '100%' }"
-                [inputStyle]="{ width: '100%' }"
-                autocomplete="new-password"
-                [attr.aria-describedby]="showPasswordReqs() ? 'pw-reqs' : null"
-                [attr.aria-invalid]="form.get('newPassword')?.invalid && form.get('newPassword')?.touched ? 'true' : null"
-              />
-              @if (showPasswordReqs()) {
-                <ul
-                  id="pw-reqs"
-                  class="password-reqs"
-                  aria-label="Requisitos de la contraseña"
-                  aria-live="polite"
-                >
-                  @for (req of passwordRequirements(); track req.label) {
-                    <li class="req-item" [class.req-item--met]="req.met">
-                      <i
-                        [class]="req.met ? 'pi pi-check-circle' : 'pi pi-times-circle'"
-                        aria-hidden="true"
-                      ></i>
-                      {{ req.label }}
-                    </li>
-                  }
-                </ul>
-              }
-            </div>
-
-            <div class="field field--full">
-              <label for="confirmPassword" class="field-label">Confirmá la contraseña</label>
-              <p-password
-                inputId="confirmPassword"
-                formControlName="confirmPassword"
-                [feedback]="false"
-                [toggleMask]="true"
-                [style]="{ width: '100%' }"
-                [inputStyle]="{ width: '100%' }"
-                autocomplete="new-password"
-                [attr.aria-invalid]="form.errors?.['passwordMismatch'] && form.get('confirmPassword')?.touched ? 'true' : null"
-                aria-describedby="confirm-pw-error"
-              />
-              @if (form.errors?.['passwordMismatch'] && form.get('confirmPassword')?.touched) {
-                <small id="confirm-pw-error" class="field-error" role="alert">
-                  Las contraseñas no coinciden.
-                </small>
-              }
-            </div>
-          </div>
-
-          <hr class="form-divider" aria-hidden="true" />
-
-          <!-- ── Email (read-only) ── -->
+        <div class="form-grid">
           <div class="field">
-            <label for="email" class="field-label">
-              Email
-              <span class="readonly-badge">solo lectura</span>
-            </label>
+            <label for="nombre" class="field-label">Nombre *</label>
             <input
               pInputText
-              id="email"
-              formControlName="email"
-              autocomplete="email"
+              id="nombre"
+              formControlName="nombre"
+              autocomplete="given-name"
+              aria-required="true"
+              [attr.aria-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched ? 'true' : null"
+              aria-describedby="nombre-error"
+            />
+            @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {
+              <small id="nombre-error" class="field-error" role="alert">
+                El nombre debe tener al menos 3 caracteres.
+              </small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="apellido" class="field-label">Apellido</label>
+            <input
+              pInputText
+              id="apellido"
+              formControlName="apellido"
+              autocomplete="family-name"
             />
           </div>
 
-          <div class="form-actions">
-            <p-button
-              type="submit"
-              label="Guardar cambios"
-              icon="pi pi-check"
-              [loading]="isSaving()"
-              [disabled]="form.invalid"
+          <div class="field">
+            <label for="tipoMoto" class="field-label">Tipo de moto</label>
+            <p-select
+              inputId="tipoMoto"
+              formControlName="tipoMotocicleta"
+              [options]="tipoMotocicletaOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccioná un tipo"
+              [showClear]="true"
+              [style]="{ width: '100%' }"
             />
+          </div>
+
+          <div class="field">
+            <label for="tipoSangre" class="field-label">
+              <i class="pi pi-heart-fill" aria-hidden="true" style="color:#ef4444;font-size:0.75rem"></i>
+              Tipo de sangre
+            </label>
+            <p-select
+              inputId="tipoSangre"
+              formControlName="tipoSangre"
+              [options]="tipoSangreOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccioná tu tipo"
+              [showClear]="true"
+              [style]="{ width: '100%' }"
+            />
+          </div>
+
+          <div class="field field--full">
+            <label for="direccion" class="field-label">Dirección</label>
+            <input
+              pInputText
+              id="direccion"
+              formControlName="direccion"
+              autocomplete="street-address"
+              placeholder="Ej: Av. Colón 123, Córdoba"
+            />
+          </div>
+        </div>
+
+        <hr class="form-divider" aria-hidden="true" />
+
+        <!-- ── Contacto de emergencia ── -->
+        <p class="form-section-title">
+          <i class="pi pi-phone" aria-hidden="true"></i>
+          Contacto de emergencia
+        </p>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="contactoNombre" class="field-label">Nombre del contacto</label>
+            <input
+              pInputText
+              id="contactoNombre"
+              formControlName="contactoEmergenciaNombre"
+              autocomplete="off"
+              placeholder="Ej: Juan Pérez"
+            />
+          </div>
+
+          <div class="field">
+            <label for="contactoTel" class="field-label">Teléfono</label>
+            <input
+              pInputText
+              id="contactoTel"
+              type="tel"
+              formControlName="contactoEmergenciaTelefono"
+              autocomplete="off"
+              placeholder="Ej: 3512345678"
+            />
+          </div>
+        </div>
+
+        <hr class="form-divider" aria-hidden="true" />
+
+        <!-- ── Seguridad ── -->
+        <p class="form-section-title">
+          <i class="pi pi-lock" aria-hidden="true"></i>
+          Cambiar contraseña
+          <span class="form-section-hint">(opcional)</span>
+        </p>
+
+        <div class="form-grid">
+          <div class="field field--full">
+            <label for="newPassword" class="field-label">Nueva contraseña</label>
+            <p-password
+              inputId="newPassword"
+              formControlName="newPassword"
+              [feedback]="false"
+              [toggleMask]="true"
+              [style]="{ width: '100%' }"
+              [inputStyle]="{ width: '100%' }"
+              autocomplete="new-password"
+              [attr.aria-describedby]="showPasswordReqs() ? 'pw-reqs' : null"
+              [attr.aria-invalid]="form.get('newPassword')?.invalid && form.get('newPassword')?.touched ? 'true' : null"
+            />
+            @if (showPasswordReqs()) {
+              <ul
+                id="pw-reqs"
+                class="password-reqs"
+                aria-label="Requisitos de la contraseña"
+                aria-live="polite"
+              >
+                @for (req of passwordRequirements(); track req.label) {
+                  <li class="req-item" [class.req-item--met]="req.met">
+                    <i
+                      [class]="req.met ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+                      aria-hidden="true"
+                    ></i>
+                    {{ req.label }}
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          <div class="field field--full">
+            <label for="confirmPassword" class="field-label">Confirmá la contraseña</label>
+            <p-password
+              inputId="confirmPassword"
+              formControlName="confirmPassword"
+              [feedback]="false"
+              [toggleMask]="true"
+              [style]="{ width: '100%' }"
+              [inputStyle]="{ width: '100%' }"
+              autocomplete="new-password"
+              [attr.aria-invalid]="form.errors?.['passwordMismatch'] && form.get('confirmPassword')?.touched ? 'true' : null"
+              aria-describedby="confirm-pw-error"
+            />
+            @if (form.errors?.['passwordMismatch'] && form.get('confirmPassword')?.touched) {
+              <small id="confirm-pw-error" class="field-error" role="alert">
+                Las contraseñas no coinciden.
+              </small>
+            }
+          </div>
+        </div>
+
+        <hr class="form-divider" aria-hidden="true" />
+
+        <!-- ── Email (read-only) ── -->
+        <div class="field">
+          <label for="email" class="field-label">
+            Email
+            <span class="readonly-badge">solo lectura</span>
+          </label>
+          <input
+            pInputText
+            id="email"
+            formControlName="email"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-actions">
+          <p-button
+            type="submit"
+            label="Guardar cambios"
+            icon="pi pi-check"
+            [loading]="isSaving()"
+            [disabled]="form.invalid"
+          />
+          <p-button
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="cancelEdit()"
+            [disabled]="isSaving()"
+          />
+        </div>
+
+        <section class="danger-zone" aria-labelledby="danger-zone-title">
+          <h2 id="danger-zone-title" class="danger-zone__title">
+            <i class="pi pi-shield" aria-hidden="true"></i>
+            Zona crítica
+          </h2>
+          <p class="danger-zone__desc">
+            Eliminá tu cuenta y todos tus datos personales de forma permanente, en ejercicio de
+            tu derecho al olvido. Esta acción no se puede deshacer.
+          </p>
+          <p-button
+            type="button"
+            label="Eliminar cuenta y datos personales"
+            icon="pi pi-trash"
+            severity="danger"
+            [outlined]="true"
+            [loading]="isDeletingAccount()"
+            (onClick)="eliminarCuenta()"
+            aria-label="Eliminar cuenta y datos personales de forma permanente"
+          />
+        </section>
+      </form>
+    </section>
+  } @else {
+    <div class="grid dashboard-grid">
+      <!-- ── Columna lateral: identidad y acciones ── -->
+      <div class="col-12 md:col-4">
+        <section class="profile-card identity-card" aria-label="Información de la cuenta">
+          <div class="card-top">
+            <div class="avatar" aria-hidden="true">{{ initials() }}</div>
+            <div class="profile-info">
+              <p class="profile-name">{{ displayName() }}</p>
+              <p class="profile-email">{{ profile()?.email }}</p>
+              @if (tipoMotoLabel()) {
+                <p class="profile-moto">
+                  <i class="pi pi-car" aria-hidden="true"></i>
+                  {{ tipoMotoLabel() }}
+                </p>
+              }
+            </div>
+          </div>
+
+          @if (profile()?.direccion) {
+            <dl class="profile-extras">
+              <div class="extra-item">
+                <dt><i class="pi pi-map-marker" aria-hidden="true"></i> Dirección</dt>
+                <dd>{{ profile()?.direccion }}</dd>
+              </div>
+            </dl>
+          }
+
+          <div class="identity-actions">
             <p-button
-              type="button"
-              label="Cancelar"
+              icon="pi pi-pencil"
+              label="Editar Perfil"
               severity="secondary"
               [outlined]="true"
-              (onClick)="cancelEdit()"
-              [disabled]="isSaving()"
+              styleClass="identity-actions__btn"
+              (onClick)="startEdit()"
+              aria-label="Editar perfil"
             />
+            <button
+              class="btn-logout"
+              type="button"
+              (click)="logout()"
+              aria-label="Cerrar sesión de la cuenta"
+            >
+              <i class="pi pi-sign-out" aria-hidden="true"></i>
+              Cerrar sesión
+            </button>
           </div>
-        </form>
-      }
-    </section>
-  }
-
-  <div class="actions">
-    <button
-      class="btn-logout"
-      type="button"
-      (click)="logout()"
-      aria-label="Cerrar sesión de la cuenta"
-    >
-      <i class="pi pi-sign-out" aria-hidden="true"></i>
-      Cerrar sesión
-    </button>
-  </div>
-
-  @if (esAdmin()) {
-    <p-card styleClass="admin-access-card" aria-label="Acceso al panel de administración">
-      <div class="admin-access">
-        <div class="admin-access__text">
-          <h2 class="admin-access__title">
-            <i class="pi pi-shield" aria-hidden="true"></i>
-            Panel de Administración y Moderación
-          </h2>
-          <p class="admin-access__desc">
-            Gestioná el control de calidad de la plataforma: revisá los reportes publicados por
-            la comunidad y actualizá su estado de moderación.
-          </p>
-        </div>
-        <p-button
-          label="Acceder al Panel de Moderación"
-          icon="pi pi-arrow-right"
-          iconPos="right"
-          (onClick)="irAlPanelDeModeracion()"
-          aria-label="Acceder al Panel de Moderación de reportes"
-        />
+        </section>
       </div>
-    </p-card>
-  }
 
-  <section class="danger-zone" aria-labelledby="danger-zone-title">
-    <h2 id="danger-zone-title" class="danger-zone__title">
-      <i class="pi pi-shield" aria-hidden="true"></i>
-      Zona crítica
-    </h2>
-    <p class="danger-zone__desc">
-      Eliminá tu cuenta y todos tus datos personales de forma permanente, en ejercicio de tu
-      derecho al olvido. Esta acción no se puede deshacer.
-    </p>
-    <p-button
-      label="Eliminar cuenta y datos personales"
-      icon="pi pi-trash"
-      severity="danger"
-      [outlined]="true"
-      [loading]="isDeletingAccount()"
-      (onClick)="eliminarCuenta()"
-      aria-label="Eliminar cuenta y datos personales de forma permanente"
-    />
-  </section>
+      <!-- ── Columna principal: Dashboard del Motoquero ── -->
+      <div class="col-12 md:col-8">
+        <div class="grid">
+          <div class="col-12 sm:col-4">
+            <div class="metric-card">
+              <i class="pi pi-map-marker metric-card__icon" aria-hidden="true"></i>
+              <div class="metric-card__body">
+                <span class="metric-card__value">{{ dashboard()?.reportesActivos ?? '—' }}</span>
+                <span class="metric-card__label">Reportes activos</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 sm:col-4">
+            <div class="metric-card">
+              <i class="pi pi-thumbs-up metric-card__icon" aria-hidden="true"></i>
+              <div class="metric-card__body">
+                <span class="metric-card__value">{{ dashboard()?.votosRecibidos ?? '—' }}</span>
+                <span class="metric-card__label">Votos recibidos</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 sm:col-4">
+            <div class="metric-card">
+              <i class="pi pi-users metric-card__icon" aria-hidden="true"></i>
+              <div class="metric-card__body">
+                <span class="metric-card__value">{{ dashboard()?.caravanasParticipando ?? '—' }}</span>
+                <span class="metric-card__label">Caravanas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p-card styleClass="chart-card" aria-label="Evolución de reportes creados">
+          <h2 class="panel-title">Evolución de tus aportes</h2>
+          @if (isLoadingDashboard()) {
+            <p class="panel-empty">Cargando actividad...</p>
+          } @else if (!chartData()) {
+            <p class="panel-empty">Todavía no registrás aportes en los últimos meses.</p>
+          } @else {
+            <p-chart type="line" [data]="chartData()" [options]="chartOptions" height="16rem" />
+          }
+        </p-card>
+
+        <p-card styleClass="security-card" aria-label="Seguridad en ruta">
+          <h2 class="panel-title security-card__title">
+            <i class="pi pi-heart-fill" aria-hidden="true"></i>
+            Seguridad en Ruta
+          </h2>
+          @if (tieneDatosMedicos()) {
+            <dl class="security-card__list">
+              @if (profile()?.tipoSangre) {
+                <div class="security-item">
+                  <dt>Tipo de sangre</dt>
+                  <dd>{{ profile()?.tipoSangre }}</dd>
+                </div>
+              }
+              @if (profile()?.contactoEmergenciaNombre) {
+                <div class="security-item">
+                  <dt>Contacto de emergencia</dt>
+                  <dd>{{ profile()?.contactoEmergenciaNombre }}</dd>
+                </div>
+              }
+              @if (profile()?.contactoEmergenciaTelefono) {
+                <div class="security-item">
+                  <dt>Teléfono de emergencia</dt>
+                  <dd>{{ profile()?.contactoEmergenciaTelefono }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <p class="panel-empty">
+              Completá tus datos médicos y de contacto de emergencia para viajar más seguro.
+            </p>
+          }
+        </p-card>
+
+        @if (esAdmin()) {
+          <p-card styleClass="admin-access-card" aria-label="Acceso al panel de administración">
+            <div class="admin-access">
+              <div class="admin-access__text">
+                <h2 class="admin-access__title">
+                  <i class="pi pi-shield" aria-hidden="true"></i>
+                  Panel de Administración y Moderación
+                </h2>
+                <p class="admin-access__desc">
+                  Gestioná el control de calidad de la plataforma: revisá los reportes publicados
+                  por la comunidad y actualizá su estado de moderación.
+                </p>
+              </div>
+              <p-button
+                label="Acceder al Panel de Moderación"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="irAlPanelDeModeracion()"
+                aria-label="Acceder al Panel de Moderación de reportes"
+              />
+            </div>
+          </p-card>
+        }
+      </div>
+    </div>
+  }
 </div>

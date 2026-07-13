@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
     tipo_sangre                   VARCHAR(10),
     contacto_emergencia_nombre    VARCHAR(255),
     contacto_emergencia_telefono  VARCHAR(50),
-    direccion                     VARCHAR(255)
+    direccion                     VARCHAR(255),
+    fecha_creacion                TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS puntos_interes (

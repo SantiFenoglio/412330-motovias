@@ -3,6 +3,10 @@ package _0.motovias_backend.repository;
 import _0.motovias_backend.model.Categoria;
 import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
+import _0.motovias_backend.model.User;
+import _0.motovias_backend.repository.projection.AporteMensualProjection;
+import _0.motovias_backend.repository.projection.CategoriaConteoProjection;
+import _0.motovias_backend.repository.projection.ZonaActividadProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -60,4 +64,57 @@ public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long
             @Param("categoria") Categoria categoria,
             @Param("estado") EstadoPunto estado,
             @Param("limite") LocalDateTime limite);
+
+    // Dashboard de métricas — total de reportes actualmente en estado ACTIVO.
+    long countByEstado(EstadoPunto estado);
+
+    // Dashboard de métricas — reportes creados en los últimos 7 días, excluyendo los dados de baja.
+    long countByFechaCreacionAfterAndEstadoNot(LocalDateTime desde, EstadoPunto estadoExcluido);
+
+    // Dashboard de métricas — conteo agrupado por categoría (JPQL, portable entre H2 y PostgreSQL).
+    @Query("""
+            SELECT p.categoria AS categoria, COUNT(p) AS cantidad
+            FROM PuntoInteres p
+            WHERE p.estado <> :estadoExcluido
+            GROUP BY p.categoria
+            """)
+    List<CategoriaConteoProjection> countPorCategoria(@Param("estadoExcluido") EstadoPunto estadoExcluido);
+
+    /**
+     * Dashboard de métricas — "Zonas con más actividad": agrupa los reportes por celda de
+     * cuadrícula geoespacial usando ST_SnapToGrid (0.01 grados ≈ 1.1 km) y devuelve, por cada
+     * celda, el centroide (ST_Centroid) de los puntos agrupados junto con su conteo.
+     *
+     * Consulta nativa exclusiva de PostGIS: no soportada por H2 (perfil de test), donde se
+     * omite mediante manejo defensivo en el servicio. Validada contra PostgreSQL real vía Postman.
+     */
+    @Query(value = """
+            SELECT
+                ST_Y(ST_Centroid(ST_Collect(ubicacion))) AS latitud,
+                ST_X(ST_Centroid(ST_Collect(ubicacion))) AS longitud,
+                COUNT(*) AS cantidad
+            FROM puntos_interes
+            WHERE estado <> 'ELIMINADO'
+            GROUP BY ST_SnapToGrid(ubicacion, 0.01)
+            ORDER BY cantidad DESC
+            LIMIT 10
+            """, nativeQuery = true)
+    List<ZonaActividadProjection> findZonasConMasActividad();
+
+    // Dashboard personal — total de reportes del usuario en un estado dado (ej. ACTIVO).
+    long countByUsuarioIdAndEstado(Long usuarioId, EstadoPunto estado);
+
+    // Dashboard personal — reportes creados por el usuario agrupados por año/mes, para
+    // graficar su evolución de aportes. YEAR()/MONTH() son funciones HQL portables entre
+    // H2 (perfil de test) y PostgreSQL.
+    @Query("""
+            SELECT YEAR(p.fechaCreacion) AS anio, MONTH(p.fechaCreacion) AS mes, COUNT(p) AS cantidad
+            FROM PuntoInteres p
+            WHERE p.usuario = :usuario AND p.fechaCreacion >= :desde
+            GROUP BY YEAR(p.fechaCreacion), MONTH(p.fechaCreacion)
+            ORDER BY YEAR(p.fechaCreacion), MONTH(p.fechaCreacion)
+            """)
+    List<AporteMensualProjection> countMensualPorUsuario(
+            @Param("usuario") User usuario,
+            @Param("desde") LocalDateTime desde);
 }
