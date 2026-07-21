@@ -16,19 +16,19 @@ export interface ZonaActividad {
   cantidad: number;
 }
 
-export interface MetricasResponse {
-  totalActivos: number;
-  reportesUltimaSemana: number;
-  usuariosNuevosMes: number;
+export interface AdminMetricasResponse {
+  totalReportesActivos: number;
+  reportesEstaSemana: number;
+  usuariosNuevosEsteMes: number;
   reportesPorCategoria: CategoriaConteo[];
-  zonasConMasActividad: ZonaActividad[];
+  zonasMasActivas: ZonaActividad[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class AdminMetricasService {
   private readonly http = inject(HttpClient);
 
-  obtenerMetricas(): Observable<MetricasResponse> {
-    return this.http.get<MetricasResponse>(BASE_URL);
+  obtenerMetricas(): Observable<AdminMetricasResponse> {
+    return this.http.get<AdminMetricasResponse>(BASE_URL);
   }
 }

@@ -11,10 +11,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MetricasResponseDTO {
-    private long totalActivos;
-    private long reportesUltimaSemana;
-    private long usuariosNuevosMes;
+public class AdminMetricasResponseDTO {
+    private long totalReportesActivos;
+    private long reportesEstaSemana;
+    private long usuariosNuevosEsteMes;
     private List<CategoriaConteoDTO> reportesPorCategoria;
-    private List<ZonaActividadDTO> zonasConMasActividad;
+    private List<ZonaActividadDTO> zonasMasActivas;
 }

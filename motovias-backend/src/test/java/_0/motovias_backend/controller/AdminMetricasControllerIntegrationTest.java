@@ -92,14 +92,14 @@ class AdminMetricasControllerIntegrationTest {
         mockMvc.perform(get("/api/admin/metricas")
                         .header("Authorization", "Bearer " + tokenAdmin))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalActivos").isNumber())
-                .andExpect(jsonPath("$.reportesUltimaSemana").isNumber())
-                .andExpect(jsonPath("$.usuariosNuevosMes").isNumber())
+                .andExpect(jsonPath("$.totalReportesActivos").isNumber())
+                .andExpect(jsonPath("$.reportesEstaSemana").isNumber())
+                .andExpect(jsonPath("$.usuariosNuevosEsteMes").isNumber())
                 .andExpect(jsonPath("$.reportesPorCategoria").isArray())
-                .andExpect(jsonPath("$.zonasConMasActividad").isArray())
-                .andExpect(jsonPath("$.totalActivos", greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.reportesUltimaSemana", greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.usuariosNuevosMes", greaterThanOrEqualTo(1)));
+                .andExpect(jsonPath("$.zonasMasActivas").isArray())
+                .andExpect(jsonPath("$.totalReportesActivos", greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.reportesEstaSemana", greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.usuariosNuevosEsteMes", greaterThanOrEqualTo(1)));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

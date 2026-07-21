@@ -20,7 +20,10 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\" -Force)",
       "Bash(Select-Object Name, Mode)",
       "Bash(Format-Table -AutoSize)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\" -Recurse -Force | Select-Object FullName, Mode | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\"\\), \".\" })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\" -Recurse -Force | Select-Object FullName, Mode | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\Santino04\\\\Desktop\\\\412330-motovias\\\\motovias-frontend\\\\src\\\\app\"\\), \".\" })",
+      "Bash(./mvnw.cmd -q -DskipTests compile)",
+      "Bash(./mvnw.cmd -q test)",
+      "Bash(./mvnw.cmd test *)"
     ]
   }
 }

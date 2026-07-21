@@ -1,13 +1,14 @@
 package _0.motovias_backend.service;
 
+import _0.motovias_backend.dto.AdminMetricasResponseDTO;
 import _0.motovias_backend.dto.CategoriaConteoDTO;
-import _0.motovias_backend.dto.MetricasResponseDTO;
 import _0.motovias_backend.dto.ZonaActividadDTO;
 import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import _0.motovias_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminMetricasService {
 
     private final PuntoInteresRepository puntoInteresRepository;
@@ -25,18 +27,18 @@ public class AdminMetricasService {
 
     private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
 
-    public MetricasResponseDTO obtenerMetricas() {
+    public AdminMetricasResponseDTO obtenerMetricas() {
         LocalDateTime ahora = ZonedDateTime.now(ZONA_ARGENTINA).toLocalDateTime();
         LocalDateTime haceUnaSemana = ahora.minusDays(7);
         LocalDateTime inicioMes = LocalDate.now(ZONA_ARGENTINA).withDayOfMonth(1).atStartOfDay();
 
-        return MetricasResponseDTO.builder()
-                .totalActivos(puntoInteresRepository.countByEstado(EstadoPunto.ACTIVO))
-                .reportesUltimaSemana(puntoInteresRepository
+        return AdminMetricasResponseDTO.builder()
+                .totalReportesActivos(puntoInteresRepository.countByEstadoNot(EstadoPunto.ELIMINADO))
+                .reportesEstaSemana(puntoInteresRepository
                         .countByFechaCreacionAfterAndEstadoNot(haceUnaSemana, EstadoPunto.ELIMINADO))
-                .usuariosNuevosMes(userRepository.countByFechaCreacionGreaterThanEqual(inicioMes))
+                .usuariosNuevosEsteMes(userRepository.countByFechaCreacionGreaterThanEqual(inicioMes))
                 .reportesPorCategoria(obtenerReportesPorCategoria())
-                .zonasConMasActividad(obtenerZonasConMasActividad())
+                .zonasMasActivas(obtenerZonasMasActivas())
                 .build();
     }
 
@@ -49,7 +51,7 @@ public class AdminMetricasService {
                 .toList();
     }
 
-    private List<ZonaActividadDTO> obtenerZonasConMasActividad() {
+    private List<ZonaActividadDTO> obtenerZonasMasActivas() {
         try {
             return puntoInteresRepository.findZonasConMasActividad().stream()
                     .map(p -> ZonaActividadDTO.builder()

@@ -65,8 +65,8 @@ public interface PuntoInteresRepository extends JpaRepository<PuntoInteres, Long
             @Param("estado") EstadoPunto estado,
             @Param("limite") LocalDateTime limite);
 
-    // Dashboard de métricas — total de reportes actualmente en estado ACTIVO.
-    long countByEstado(EstadoPunto estado);
+    // Dashboard de métricas — total de reportes vigentes (todo lo que no está dado de baja lógica).
+    long countByEstadoNot(EstadoPunto estadoExcluido);
 
     // Dashboard de métricas — reportes creados en los últimos 7 días, excluyendo los dados de baja.
     long countByFechaCreacionAfterAndEstadoNot(LocalDateTime desde, EstadoPunto estadoExcluido);
