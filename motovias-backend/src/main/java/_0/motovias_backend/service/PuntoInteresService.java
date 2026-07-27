@@ -5,12 +5,14 @@ import _0.motovias_backend.dto.PuntoInteresResponseDTO;
 import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.User;
+import _0.motovias_backend.repository.FotoReporteRepository;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +25,10 @@ import java.util.List;
 public class PuntoInteresService {
 
     private final PuntoInteresRepository repository;
+    private final FotoReporteRepository fotoReporteRepository;
+
+    @Value("${app.upload.base-url}")
+    private String uploadBaseUrl;
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -80,6 +86,13 @@ public class PuntoInteresService {
                 .longitud(p.getUbicacion().getX())
                 .emailUsuario(p.getUsuario() != null ? p.getUsuario().getEmail() : null)
                 .nombreUsuario(nombreUsuario)
+                .fotos(obtenerUrlsFotos(p))
                 .build();
+    }
+
+    private List<String> obtenerUrlsFotos(PuntoInteres p) {
+        return fotoReporteRepository.findByReporteOrderByFechaCargaAsc(p).stream()
+                .map(f -> uploadBaseUrl + "/uploads/" + f.getRutaArchivo())
+                .toList();
     }
 }

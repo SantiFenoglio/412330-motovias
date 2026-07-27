@@ -129,6 +129,14 @@
       </div>
     </div>
 
+    <!-- Fotos del reporte -->
+    @if (visible()) {
+      <div class="form-field">
+        <span class="fotos-label">Fotos (opcional)</span>
+        <app-image-upload (filesChanged)="onFotosChanged($event)" />
+      </div>
+    }
+
     <!-- Sección de ubicación manual (fallback de GPS) -->
     @if (fuenteUbicacion() === 'MANUAL') {
       <div class="manual-location-section">

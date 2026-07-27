@@ -49,6 +49,10 @@
           <p class="reporte-descripcion">{{ punto()!.descripcion }}</p>
         }
 
+        @if (punto()!.fotos?.length) {
+          <app-image-gallery [fotos]="punto()!.fotos!" />
+        }
+
         <dl class="reporte-meta">
           @if (punto()!.nombreUsuario ?? punto()!.emailUsuario) {
             <div class="meta-row">

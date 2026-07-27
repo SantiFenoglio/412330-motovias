@@ -35,6 +35,12 @@ export class ReporteService {
     return this.http.post<void>(`${BASE_URL}/${id}/votar`, { tipoVoto });
   }
 
+  subirFotos(id: number, archivos: File[]): Observable<PuntoInteres> {
+    const formData = new FormData();
+    archivos.forEach((archivo) => formData.append('fotos', archivo));
+    return this.http.post<PuntoInteres>(`${BASE_URL}/${id}/fotos`, formData);
+  }
+
   obtenerHistorialReporte(id: number): Observable<ReporteEvento[]> {
     return this.http.get<ReporteEvento[]>(`${BASE_URL}/${id}/eventos`);
   }

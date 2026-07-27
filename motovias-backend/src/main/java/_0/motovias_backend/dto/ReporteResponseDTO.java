@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,4 +28,5 @@ public class ReporteResponseDTO {
     private long confirmaciones;
     private long refutaciones;
     private FuenteUbicacion fuenteUbicacion;
+    private List<String> fotos;
 }

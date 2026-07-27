@@ -51,6 +51,10 @@
           <p class="popup-descripcion">{{ punto()!.descripcion }}</p>
         }
 
+        @if (punto()!.fotos?.length) {
+          <app-image-gallery [fotos]="punto()!.fotos!" />
+        }
+
         <dl class="popup-meta">
           @if (punto()!.nombreUsuario ?? punto()!.emailUsuario) {
             <div class="meta-row">

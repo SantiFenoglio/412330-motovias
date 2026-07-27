@@ -17,11 +17,12 @@ import {
   ESTADO_CONFIG,
   PuntoInteres,
 } from '../../../core/models/punto-interes.model';
+import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 
 @Component({
   selector: 'app-reporte-popup',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, Tooltip],
+  imports: [DatePipe, Tooltip, ImageGalleryComponent],
   templateUrl: './reporte-popup.component.html',
   styleUrl: './reporte-popup.component.css',
 })

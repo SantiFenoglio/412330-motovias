@@ -12,6 +12,7 @@ import _0.motovias_backend.model.ReporteEvento;
 import _0.motovias_backend.model.Role;
 import _0.motovias_backend.model.TipoEventoReporte;
 import _0.motovias_backend.model.User;
+import _0.motovias_backend.repository.FotoReporteRepository;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.UserRepository;
@@ -61,6 +62,9 @@ class ReporteServiceTest {
 
     @Mock
     private NotificacionService notificacionService;
+
+    @Mock
+    private FotoReporteRepository fotoReporteRepository;
 
     @InjectMocks
     private ReporteService service;

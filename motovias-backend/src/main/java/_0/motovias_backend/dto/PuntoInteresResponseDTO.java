@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -22,4 +24,5 @@ public class PuntoInteresResponseDTO {
     private String fechaCreacion;
     private String emailUsuario;
     private String nombreUsuario;
+    private List<String> fotos;
 }

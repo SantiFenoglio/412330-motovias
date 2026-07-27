@@ -1,0 +1,39 @@
+<div class="image-upload">
+  <div class="image-upload-grid">
+    @for (preview of previews(); track preview.file; let i = $index) {
+      <div class="image-upload-item">
+        <img [src]="preview.previewUrl" [alt]="'Vista previa de la foto ' + (i + 1)" />
+        <button
+          type="button"
+          class="image-upload-remove"
+          (click)="eliminar(i)"
+          [attr.aria-label]="'Eliminar foto ' + (i + 1)"
+        >
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+      </div>
+    }
+
+    @if (puedeAgregarMas()) {
+      <label class="image-upload-add">
+        <input
+          type="file"
+          accept="image/jpeg,image/png"
+          multiple
+          (change)="onFileSelected($event)"
+          aria-label="Agregar fotos al reporte"
+        />
+        <i class="pi pi-camera" aria-hidden="true"></i>
+        <span>Agregar foto</span>
+      </label>
+    }
+  </div>
+
+  <p class="image-upload-hint">
+    Hasta {{ maxFotos() }} fotos · JPEG o PNG · máx. 5MB cada una
+  </p>
+
+  @if (error()) {
+    <p class="image-upload-error" role="alert">{{ error() }}</p>
+  }
+</div>

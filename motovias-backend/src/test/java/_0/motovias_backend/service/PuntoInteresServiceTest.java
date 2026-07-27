@@ -6,6 +6,7 @@ import _0.motovias_backend.model.Categoria;
 import _0.motovias_backend.model.EstadoPunto;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.User;
+import _0.motovias_backend.repository.FotoReporteRepository;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +30,9 @@ class PuntoInteresServiceTest {
 
     @Mock
     private PuntoInteresRepository repository;
+
+    @Mock
+    private FotoReporteRepository fotoReporteRepository;
 
     @InjectMocks
     private PuntoInteresService service;

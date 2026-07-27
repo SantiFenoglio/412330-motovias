@@ -27,6 +27,7 @@ import { Textarea } from 'primeng/textarea';
 import { GeolocationService } from '../../../core/services/geolocation.service';
 import { GeocodingService, NominatimResult } from '../../../core/services/geocoding.service';
 import { ReporteService } from '../../../core/services/reporte.service';
+import { ImageUploadComponent } from '../../../shared/image-upload/image-upload.component';
 import {
   Categoria,
   CATEGORY_CONFIG,
@@ -51,6 +52,7 @@ type GpsState = 'idle' | 'loading' | 'success' | 'error';
     Button,
     Dialog,
     FloatLabel,
+    ImageUploadComponent,
     InputText,
     Message,
     Select,
@@ -89,6 +91,7 @@ export class ReporteFormComponent {
   readonly locationSelected = signal(false);
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
+  readonly fotosSeleccionadas = signal<File[]>([]);
   readonly searchValue = signal('');
   readonly geocodingResults = signal<NominatimResult[]>([]);
   readonly geocodingLoading = signal(false);
@@ -159,6 +162,7 @@ export class ReporteFormComponent {
     this.locationSelected.set(false);
     this.submitError.set(null);
     this.submitting.set(false);
+    this.fotosSeleccionadas.set([]);
     this.searchValue.set('');
     this.geocodingResults.set([]);
     this.geocodingLoading.set(false);
@@ -219,15 +223,35 @@ export class ReporteFormComponent {
     this.submitError.set(null);
 
     this.reporteService.crear(request).subscribe({
-      next: () => {
-        this.submitting.set(false);
-        this.closed.emit();
+      next: (nuevoReporte) => {
+        const fotos = this.fotosSeleccionadas();
+        if (fotos.length === 0) {
+          this.submitting.set(false);
+          this.closed.emit();
+          return;
+        }
+
+        this.reporteService.subirFotos(nuevoReporte.id, fotos).subscribe({
+          next: () => {
+            this.submitting.set(false);
+            this.closed.emit();
+          },
+          error: () => {
+            // El reporte ya fue publicado; solo falló la carga de fotos.
+            this.submitting.set(false);
+            this.closed.emit();
+          },
+        });
       },
       error: () => {
         this.submitting.set(false);
         this.submitError.set('No se pudo publicar el aviso. Intentá de nuevo.');
       },
     });
+  }
+
+  onFotosChanged(archivos: File[]): void {
+    this.fotosSeleccionadas.set(archivos);
   }
 
   get submitDisabled(): boolean {

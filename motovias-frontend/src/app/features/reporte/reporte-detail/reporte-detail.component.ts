@@ -21,6 +21,7 @@ import {
   ReporteEvento,
   TIPO_EVENTO_CONFIG,
 } from '../../../core/models/reporte-evento.model';
+import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 
 interface EventoHistorialVista {
   id: number;
@@ -34,7 +35,7 @@ interface EventoHistorialVista {
 @Component({
   selector: 'app-reporte-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, RouterLink, Card, Timeline, PrimeTemplate],
+  imports: [DatePipe, RouterLink, Card, Timeline, PrimeTemplate, ImageGalleryComponent],
   templateUrl: './reporte-detail.component.html',
   styleUrl: './reporte-detail.component.css',
 })

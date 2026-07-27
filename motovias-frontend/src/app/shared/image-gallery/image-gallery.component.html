@@ -1,0 +1,48 @@
+@if (fotos().length > 0) {
+  <div class="gallery" role="group" aria-label="Fotos del reporte">
+    @for (foto of fotos(); track foto; let i = $index) {
+      <button
+        type="button"
+        class="gallery-thumb"
+        (click)="abrir(i)"
+        [attr.aria-label]="'Ampliar foto ' + (i + 1) + ' de ' + fotos().length"
+      >
+        <img [src]="foto" [alt]="'Foto ' + (i + 1) + ' del reporte'" loading="lazy" />
+      </button>
+    }
+  </div>
+
+  @if (indiceActivo() !== null) {
+    <div class="gallery-lightbox-backdrop" (click)="onBackdropClick($event)">
+      <div class="gallery-lightbox" role="dialog" aria-modal="true" aria-label="Foto ampliada">
+        <button
+          type="button"
+          class="gallery-lightbox-close"
+          (click)="cerrar()"
+          aria-label="Cerrar imagen ampliada"
+        >
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+
+        <img
+          [src]="fotos()[indiceActivo()!]"
+          [alt]="'Foto ' + (indiceActivo()! + 1) + ' del reporte, ampliada'"
+        />
+
+        @if (fotos().length > 1) {
+          <div class="gallery-lightbox-nav">
+            <button type="button" (click)="anterior()" aria-label="Foto anterior">
+              <i class="pi pi-chevron-left" aria-hidden="true"></i>
+            </button>
+            <span class="gallery-lightbox-count">
+              {{ indiceActivo()! + 1 }} / {{ fotos().length }}
+            </span>
+            <button type="button" (click)="siguiente()" aria-label="Foto siguiente">
+              <i class="pi pi-chevron-right" aria-hidden="true"></i>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+}

@@ -37,6 +37,12 @@
   padding-top: 0.5rem;
 }
 
+.fotos-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
 :deep(.gps-message) {
   width: 100%;
   margin-bottom: 0.5rem;

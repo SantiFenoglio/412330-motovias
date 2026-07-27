@@ -62,6 +62,7 @@ export interface PuntoInteres {
   nombreUsuario?: string;
   confirmaciones?: number;
   refutaciones?: number;
+  fotos?: string[];
 }
 
 export type FuenteUbicacion = 'GPS' | 'MANUAL';

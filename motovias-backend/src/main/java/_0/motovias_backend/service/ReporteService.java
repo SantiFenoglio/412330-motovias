@@ -6,6 +6,7 @@ import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.ReporteUpdateDTO;
 import _0.motovias_backend.dto.VotoRequestDTO;
 import _0.motovias_backend.model.EstadoPunto;
+import _0.motovias_backend.model.FotoReporte;
 import _0.motovias_backend.model.FuenteUbicacion;
 import _0.motovias_backend.model.PuntoInteres;
 import _0.motovias_backend.model.ReporteEvento;
@@ -14,6 +15,7 @@ import _0.motovias_backend.model.Role;
 import _0.motovias_backend.model.TipoEventoReporte;
 import _0.motovias_backend.model.TipoVoto;
 import _0.motovias_backend.model.User;
+import _0.motovias_backend.repository.FotoReporteRepository;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.ReporteVotoRepository;
@@ -23,17 +25,24 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +53,19 @@ public class ReporteService {
     private final ReporteVotoRepository votoRepository;
     private final ReporteEventoRepository eventoRepository;
     private final NotificacionService notificacionService;
+    private final FotoReporteRepository fotoReporteRepository;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
+
+    @Value("${app.upload.base-url}")
+    private String uploadBaseUrl;
+
+    @Value("${app.upload.max-fotos:3}")
+    private int maxFotos;
+
+    @Value("${app.upload.max-size-bytes:5242880}")
+    private long maxSizeBytes;
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
     private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
@@ -188,6 +210,74 @@ public class ReporteService {
                 .toList();
     }
 
+    @Transactional
+    public ReporteResponseDTO subirFotos(Long reporteId, MultipartFile[] archivos) {
+        PuntoInteres punto = repository.findById(reporteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte no encontrado"));
+
+        User autenticado = validarAutoria(punto);
+
+        if (archivos == null || archivos.length == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe adjuntar al menos una foto");
+        }
+
+        long existentes = fotoReporteRepository.countByReporte(punto);
+        if (existentes + archivos.length > maxFotos) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El reporte no puede tener más de " + maxFotos + " fotos");
+        }
+
+        for (MultipartFile archivo : archivos) {
+            validarArchivo(archivo);
+        }
+
+        for (MultipartFile archivo : archivos) {
+            String nombreArchivo = guardarArchivo(archivo);
+            fotoReporteRepository.save(FotoReporte.builder()
+                    .reporte(punto)
+                    .rutaArchivo(nombreArchivo)
+                    .build());
+        }
+
+        registrarEvento(punto, autenticado, TipoEventoReporte.EDICION,
+                "Se agregaron " + archivos.length + " foto(s) al reporte");
+
+        return toDTO(punto);
+    }
+
+    private void validarArchivo(MultipartFile archivo) {
+        if (archivo.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El archivo está vacío");
+        }
+        if (archivo.getSize() > maxSizeBytes) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El archivo supera el tamaño máximo permitido de 5MB");
+        }
+
+        String tipoContenido = archivo.getContentType();
+        boolean tipoValido = MediaType.IMAGE_JPEG_VALUE.equals(tipoContenido)
+                || MediaType.IMAGE_PNG_VALUE.equals(tipoContenido);
+        if (!tipoValido) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Tipo de archivo no soportado: solo se permiten imágenes JPEG o PNG");
+        }
+    }
+
+    private String guardarArchivo(MultipartFile archivo) {
+        try {
+            Path directorio = Path.of(uploadDir);
+            Files.createDirectories(directorio);
+
+            String extension = MediaType.IMAGE_PNG_VALUE.equals(archivo.getContentType()) ? ".png" : ".jpg";
+            String nombreArchivo = UUID.randomUUID() + extension;
+
+            archivo.transferTo(directorio.resolve(nombreArchivo));
+            return nombreArchivo;
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "No se pudo guardar la foto", e);
+        }
+    }
+
     private void registrarEvento(PuntoInteres reporte, User usuario, TipoEventoReporte tipo, String descripcion) {
         eventoRepository.save(ReporteEvento.builder()
                 .reporte(reporte)
@@ -235,7 +325,14 @@ public class ReporteService {
                 .emailUsuario(p.getUsuario() != null ? p.getUsuario().getEmail() : null)
                 .nombreUsuario(nombreUsuario)
                 .fuenteUbicacion(p.getFuenteUbicacion())
+                .fotos(obtenerUrlsFotos(p))
                 .build();
+    }
+
+    private List<String> obtenerUrlsFotos(PuntoInteres p) {
+        return fotoReporteRepository.findByReporteOrderByFechaCargaAsc(p).stream()
+                .map(f -> uploadBaseUrl + "/uploads/" + f.getRutaArchivo())
+                .toList();
     }
 
     private ReporteEventoResponseDTO toEventoDTO(ReporteEvento evento) {

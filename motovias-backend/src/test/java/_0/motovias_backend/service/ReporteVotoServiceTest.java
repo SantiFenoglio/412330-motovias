@@ -3,6 +3,7 @@ package _0.motovias_backend.service;
 import _0.motovias_backend.dto.ReporteResponseDTO;
 import _0.motovias_backend.dto.VotoRequestDTO;
 import _0.motovias_backend.model.*;
+import _0.motovias_backend.repository.FotoReporteRepository;
 import _0.motovias_backend.repository.PuntoInteresRepository;
 import _0.motovias_backend.repository.ReporteEventoRepository;
 import _0.motovias_backend.repository.ReporteVotoRepository;
@@ -47,6 +48,9 @@ class ReporteVotoServiceTest {
 
     @Mock
     private NotificacionService notificacionService;
+
+    @Mock
+    private FotoReporteRepository fotoReporteRepository;
 
     @InjectMocks
     private ReporteService service;
