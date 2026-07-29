@@ -69,6 +69,14 @@ export const routes: Routes = [
             (m) => m.AdminReportesComponent,
           ),
       },
+      {
+        path: 'admin/comercios',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin-comercios/admin-comercios.component').then(
+            (m) => m.AdminComerciosComponent,
+          ),
+      },
       { path: '', redirectTo: 'map', pathMatch: 'full' },
     ],
   },

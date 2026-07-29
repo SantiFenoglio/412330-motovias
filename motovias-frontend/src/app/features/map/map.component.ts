@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DOCUMENT } from '@angular/common';
 import * as L from 'leaflet';
 import { ConfirmationService, MessageService, PrimeTemplate } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -23,12 +24,18 @@ import { Select } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { Toast } from 'primeng/toast';
 import { AuthService } from '../../core/services/auth.service';
+import { ComercioService } from '../../core/services/comercio.service';
 import { GeolocationService, UserCoords } from '../../core/services/geolocation.service';
 import { LocationSharingService } from '../../core/services/location-sharing.service';
 import { PuntoInteresService } from '../../core/services/punto-interes.service';
 import { ReporteService } from '../../core/services/reporte.service';
 import { ReporteWebSocketService } from '../../core/services/reporte-websocket.service';
 import { Categoria, EstadoPunto, PuntoInteres } from '../../core/models/punto-interes.model';
+import {
+  CATEGORIA_COMERCIO_CONFIG,
+  CategoriaComercio,
+  ComercioVerificado,
+} from '../../core/models/comercio-verificado.model';
 import { ParticipanteUbicacionDTO } from '../../core/models/participante-ubicacion.model';
 import { FilterPanelComponent } from './filter-panel/filter-panel.component';
 import { ReportePopupComponent } from './reporte-popup/reporte-popup.component';
@@ -81,6 +88,35 @@ const DUDOSO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
   <circle cx="12" cy="17" r="0.5" fill="#fff" stroke="#fff"/>
 </svg>`;
 
+// Íconos de comercios verificados: forma cuadrada con esquinas redondeadas para
+// diferenciarse visualmente de los pines circulares de reportes de la comunidad.
+const CATEGORIA_COMERCIO_SVG: Record<CategoriaComercio, string> = {
+  TALLER_MECANICO: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+  </svg>`,
+  GOMERIA: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="4"/>
+    <line x1="12" y1="2"  x2="12" y2="8"/>
+    <line x1="12" y1="16" x2="12" y2="22"/>
+    <line x1="2"  y1="12" x2="8"  y2="12"/>
+    <line x1="16" y1="12" x2="22" y2="12"/>
+  </svg>`,
+  REPUESTOS: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+    stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <path d="M21 8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4a2 2 0 001-1.73z"/>
+    <polyline points="3.29 7 12 12 20.71 7"/>
+    <line x1="12" y1="22" x2="12" y2="12"/>
+  </svg>`,
+};
+
+const VERIFICADO_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+  stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="10" height="10">
+  <polyline points="20 6 9 17 4 12"/>
+</svg>`;
+
 const PARTICIPANT_COLORS = [
   '#f97316', '#3b82f6', '#10b981', '#8b5cf6',
   '#ec4899', '#f59e0b', '#14b8a6', '#6366f1',
@@ -118,8 +154,10 @@ export class MapComponent implements OnDestroy {
 
   private readonly zone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
   private readonly geolocationService = inject(GeolocationService);
   readonly puntoInteresService = inject(PuntoInteresService);
+  private readonly comercioService = inject(ComercioService);
   private readonly wsService = inject(ReporteWebSocketService);
   private readonly authService = inject(AuthService);
   private readonly reporteService = inject(ReporteService);
@@ -130,6 +168,7 @@ export class MapComponent implements OnDestroy {
 
   private map: L.Map | undefined;
   private readonly leafletMarkers = new Map<number, L.Marker>();
+  private readonly comercioMarkers = new Map<number, L.Marker>();
   private readonly marcadoresParticipantes = new Map<string, L.Marker>();
   private userLocationMarker: L.Marker | undefined;
 
@@ -181,10 +220,19 @@ export class MapComponent implements OnDestroy {
       }
     });
 
+    // Capa de comercios verificados (talleres y gomerías dados de alta por el administrador)
+    effect(() => {
+      const comercios = this.comercioService.comerciosActivos();
+      if (this.map) {
+        this.zone.runOutsideAngular(() => this.sincronizarComercios(comercios));
+      }
+    });
+
     afterNextRender(() => {
       this.zone.runOutsideAngular(() => {
         this.initMap();
         this.sincronizarMarcadores(this.puntoInteresService.puntosFiltrados());
+        this.sincronizarComercios(this.comercioService.comerciosActivos());
       });
     });
 
@@ -483,5 +531,82 @@ export class MapComponent implements OnDestroy {
   private limpiarMarcadoresParticipantes(): void {
     this.marcadoresParticipantes.forEach((marker) => marker.remove());
     this.marcadoresParticipantes.clear();
+  }
+
+  private crearIconoComercio(comercio: ComercioVerificado): L.DivIcon {
+    const color = CATEGORIA_COMERCIO_CONFIG[comercio.categoria].color;
+    const svg = CATEGORIA_COMERCIO_SVG[comercio.categoria];
+    const label = `Comercio verificado: ${this.escapeHtml(comercio.nombre)}`;
+    return L.divIcon({
+      className: '',
+      html: `<div class="comercio-pin" style="background:${color}" role="img" aria-label="${label}">
+               ${svg}
+               <span class="comercio-pin__badge" aria-hidden="true">${VERIFICADO_BADGE_SVG}</span>
+             </div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
+    });
+  }
+
+  private crearPopupComercio(comercio: ComercioVerificado): string {
+    const categoriaLabel = this.escapeHtml(CATEGORIA_COMERCIO_CONFIG[comercio.categoria].label);
+    const telefonoRow = comercio.telefono
+      ? `<div class="comercio-popup__meta-row">
+           <i class="pi pi-phone" aria-hidden="true"></i>
+           <span>${this.escapeHtml(comercio.telefono)}</span>
+         </div>`
+      : '';
+
+    return `
+      <div class="comercio-popup">
+        <div class="comercio-popup__header">
+          <span class="comercio-popup__nombre">${this.escapeHtml(comercio.nombre)}</span>
+          <span class="comercio-popup__verificado-badge">
+            <i class="pi pi-verified" aria-hidden="true"></i> Verificado
+          </span>
+        </div>
+        <span class="comercio-popup__categoria">${categoriaLabel}</span>
+        <div class="comercio-popup__meta">
+          <div class="comercio-popup__meta-row">
+            <i class="pi pi-map-marker" aria-hidden="true"></i>
+            <span>${this.escapeHtml(comercio.direccion)}</span>
+          </div>
+          ${telefonoRow}
+        </div>
+      </div>
+    `;
+  }
+
+  private crearMarcadorComercio(comercio: ComercioVerificado): L.Marker {
+    const marker = L.marker([comercio.latitud, comercio.longitud], {
+      icon: this.crearIconoComercio(comercio),
+    });
+    marker.bindPopup(this.crearPopupComercio(comercio));
+    return marker;
+  }
+
+  private sincronizarComercios(comercios: ComercioVerificado[]): void {
+    const idsActuales = new Set(comercios.map((c) => c.id));
+
+    this.comercioMarkers.forEach((marker, id) => {
+      if (!idsActuales.has(id)) {
+        marker.remove();
+        this.comercioMarkers.delete(id);
+      }
+    });
+
+    for (const comercio of comercios) {
+      if (!this.comercioMarkers.has(comercio.id)) {
+        const marker = this.crearMarcadorComercio(comercio);
+        marker.addTo(this.map!);
+        this.comercioMarkers.set(comercio.id, marker);
+      }
+    }
+  }
+
+  private escapeHtml(value: string): string {
+    const div = this.document.createElement('div');
+    div.textContent = value;
+    return div.innerHTML;
   }
 }

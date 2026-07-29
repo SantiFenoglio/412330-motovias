@@ -104,7 +104,14 @@ public class MercadoPagoService {
             log.info("Iniciando llamada externa al SDK de Mercado Pago...");
             Preference preference = client.create(request);
             log.info("Respuesta recibida del SDK de Mercado Pago, preferencia id={}", preference.getId());
-            return preference.getInitPoint();
+
+            // Con credenciales TEST-, Mercado Pago completa sandboxInitPoint (checkout de
+            // prueba, solo operable con usuarios de prueba) y ese es el link que debe usarse.
+            // Con credenciales de producción, sandboxInitPoint viene vacío y se usa initPoint.
+            String sandboxInitPoint = preference.getSandboxInitPoint();
+            return (sandboxInitPoint != null && !sandboxInitPoint.isBlank())
+                    ? sandboxInitPoint
+                    : preference.getInitPoint();
         } catch (MPApiException e) {
             log.error("Mercado Pago respondió con error de API: {}", e.getApiResponse().getContent(), e);
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,

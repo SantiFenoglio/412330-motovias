@@ -4,8 +4,8 @@
     {
       "name": "frontend-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "motovias-frontend", "run", "start", "--", "--port", "4201"],
-      "port": 4201
+      "runtimeArgs": ["--prefix", "motovias-frontend", "run", "start", "--", "--port", "4200"],
+      "port": 4200
     }
   ]
 }

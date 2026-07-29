@@ -1,0 +1,279 @@
+<div class="page-shell">
+  <header class="page-header">
+    <div class="page-header__text">
+      <h1 class="page-title">
+        <i class="pi pi-verified" aria-hidden="true"></i>
+        Comercios Verificados
+      </h1>
+      <p class="page-subtitle">
+        Gestioná los talleres y gomerías verificados que se muestran en el mapa público.
+      </p>
+    </div>
+    <p-button
+      label="Nuevo comercio"
+      icon="pi pi-plus"
+      (onClick)="abrirAlta()"
+    />
+  </header>
+
+  <section class="filtros" aria-label="Filtros de búsqueda de comercios">
+    <div class="filtro-campo">
+      <label for="filtro-categoria" class="filtro-label">Categoría</label>
+      <p-select
+        inputId="filtro-categoria"
+        [options]="categoriaOptions"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        placeholder="Todas las categorías"
+        [style]="{ width: '100%' }"
+        appendTo="body"
+        [ngModel]="filtroCategoria()"
+        (ngModelChange)="onFiltroCategoriaChange($event)"
+      />
+    </div>
+
+    <div class="filtro-campo">
+      <label for="filtro-estado" class="filtro-label">Estado</label>
+      <p-select
+        inputId="filtro-estado"
+        [options]="estadoOptions"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        placeholder="Todos los estados"
+        [style]="{ width: '100%' }"
+        appendTo="body"
+        [ngModel]="filtroEstado()"
+        (ngModelChange)="onFiltroEstadoChange($event)"
+      />
+    </div>
+  </section>
+
+  <section class="tabla-wrapper" aria-label="Listado de comercios verificados">
+    <p-table
+      [value]="comerciosFiltrados()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading()"
+      styleClass="p-datatable-striped"
+      [tableStyle]="{ 'min-width': '860px' }"
+      aria-label="Tabla de gestión de comercios verificados"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Nombre</th>
+          <th scope="col">Dirección</th>
+          <th scope="col">Teléfono</th>
+          <th scope="col">Categoría</th>
+          <th scope="col">Estado</th>
+          <th scope="col" class="col-right">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-comercio>
+        <tr>
+          <td>{{ comercio.id }}</td>
+          <td>{{ comercio.nombre }}</td>
+          <td>{{ comercio.direccion }}</td>
+          <td>{{ comercio.telefono ?? '—' }}</td>
+          <td>
+            <span class="categoria-badge">
+              {{ $any(categoriaLabels)[comercio.categoria] ?? comercio.categoria }}
+            </span>
+          </td>
+          <td>
+            <span class="estado-badge" [class.estado-badge--inactivo]="!comercio.activo">
+              {{ comercio.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="col-right">
+            <div class="acciones-cell">
+              <button
+                type="button"
+                class="btn-icon btn-icon--edit"
+                (click)="abrirEdicion(comercio)"
+                [attr.aria-label]="'Editar ' + comercio.nombre"
+              >
+                <i class="pi pi-pencil" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class="btn-icon"
+                [class.btn-icon--activar]="!comercio.activo"
+                [class.btn-icon--desactivar]="comercio.activo"
+                [disabled]="cambiandoEstadoId() === comercio.id"
+                (click)="toggleEstado(comercio)"
+                [attr.aria-label]="(comercio.activo ? 'Desactivar ' : 'Activar ') + comercio.nombre"
+              >
+                <i [class]="comercio.activo ? 'pi pi-eye-slash' : 'pi pi-eye'" aria-hidden="true"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="empty-table-row">
+            No hay comercios que coincidan con los filtros seleccionados.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [modal]="true"
+  [style]="{ width: '32rem' }"
+  [breakpoints]="{ '640px': '95vw' }"
+  [draggable]="false"
+  [header]="editando() ? 'Editar comercio' : 'Nuevo comercio verificado'"
+  (onShow)="onDialogShow()"
+  (onHide)="onDialogHide()"
+>
+  <form [formGroup]="form" class="comercio-form" (ngSubmit)="guardar()" novalidate>
+    <div class="form-field">
+      <p-floatlabel>
+        <input
+          id="nombre"
+          type="text"
+          pInputText
+          formControlName="nombre"
+          [class.ng-invalid]="nombreInvalid"
+          aria-describedby="nombre-error"
+          autocomplete="off"
+        />
+        <label for="nombre">Nombre del comercio <span aria-hidden="true">*</span></label>
+      </p-floatlabel>
+      <div id="nombre-error" aria-live="polite" class="field-errors">
+        @if (nombreInvalid) {
+          <small class="form-error">El nombre es obligatorio (mínimo 3 caracteres).</small>
+        }
+      </div>
+    </div>
+
+    <div class="form-field">
+      <p-floatlabel>
+        <input
+          id="direccion"
+          type="text"
+          pInputText
+          formControlName="direccion"
+          [class.ng-invalid]="direccionInvalid"
+          aria-describedby="direccion-error"
+          autocomplete="off"
+        />
+        <label for="direccion">Dirección <span aria-hidden="true">*</span></label>
+      </p-floatlabel>
+      <div id="direccion-error" aria-live="polite" class="field-errors">
+        @if (direccionInvalid) {
+          <small class="form-error">La dirección es obligatoria.</small>
+        }
+      </div>
+    </div>
+
+    <div class="form-field">
+      <p-floatlabel>
+        <input
+          id="telefono"
+          type="tel"
+          pInputText
+          formControlName="telefono"
+          autocomplete="off"
+        />
+        <label for="telefono">Teléfono (opcional)</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="form-field">
+      <p-floatlabel>
+        <p-select
+          inputId="categoria"
+          formControlName="categoria"
+          [options]="categoriaOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccioná una categoría"
+          [class.ng-invalid]="categoriaInvalid"
+          aria-describedby="categoria-error"
+          styleClass="w-full"
+          appendTo="body"
+        />
+        <label for="categoria">Categoría <span aria-hidden="true">*</span></label>
+      </p-floatlabel>
+      <div id="categoria-error" aria-live="polite" class="field-errors">
+        @if (categoriaInvalid) {
+          <small class="form-error">La categoría es obligatoria.</small>
+        }
+      </div>
+    </div>
+
+    <div class="coords-row">
+      <div class="form-field">
+        <p-floatlabel>
+          <input
+            id="latitud"
+            type="number"
+            step="any"
+            pInputText
+            formControlName="latitud"
+            (change)="onCoordenadasManualesChange()"
+          />
+          <label for="latitud">Latitud</label>
+        </p-floatlabel>
+      </div>
+      <div class="form-field">
+        <p-floatlabel>
+          <input
+            id="longitud"
+            type="number"
+            step="any"
+            pInputText
+            formControlName="longitud"
+            (change)="onCoordenadasManualesChange()"
+          />
+          <label for="longitud">Longitud</label>
+        </p-floatlabel>
+      </div>
+    </div>
+    <div class="field-errors">
+      @if (coordenadasInvalidas) {
+        <small class="form-error">Ingresá coordenadas válidas o seleccioná un punto en el mapa.</small>
+      }
+    </div>
+
+    <p class="mini-map-hint" aria-hidden="true">
+      <i class="pi pi-map-marker"></i>
+      Hacé clic en el mapa o arrastrá el marcador para ajustar la ubicación
+    </p>
+    <div
+      #miniMapContainer
+      class="mini-map-container"
+      role="region"
+      aria-label="Mapa para selección de la ubicación del comercio. Hacé clic para colocar el marcador."
+    ></div>
+
+    <div class="form-actions">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="dialogVisible.set(false)"
+      />
+      <p-button
+        type="submit"
+        label="Guardar"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="form.invalid || saving()"
+      />
+    </div>
+  </form>
+</p-dialog>
+
+<p-toast position="bottom-center" />

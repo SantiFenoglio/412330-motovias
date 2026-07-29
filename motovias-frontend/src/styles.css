@@ -228,3 +228,110 @@ body {
   font-size: 0.8rem;
   color: #475569;
 }
+
+/* ─── Marcadores de comercios verificados ──────────────────────
+   Forma cuadrada con esquinas redondeadas + insignia dorada de verificación,
+   para diferenciarse de los pines circulares de reportes de la comunidad.
+   Fuera del shadow DOM; deben vivir en el scope global como .moto-pin */
+.comercio-pin {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    0 0 0 3px #ffffff;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.comercio-pin:hover {
+  transform: scale(1.15);
+}
+
+.comercio-pin svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.comercio-pin__badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Popup de comercio verificado ──────────────────────────── */
+.comercio-popup {
+  font-family: inherit;
+  min-width: 200px;
+}
+
+.comercio-popup__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.comercio-popup__nombre {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+.comercio-popup__verificado-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.comercio-popup__categoria {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 0.1rem 0.6rem;
+}
+
+.comercio-popup__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.comercio-popup__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.comercio-popup__meta-row i {
+  color: #94a3b8;
+}
