@@ -1,8 +1,8 @@
 .reporte-form {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
-  padding-top: 1.25rem;
+  gap: 1.15rem;
+  padding-top: 0.75rem;
 }
 
 .form-field {
@@ -148,7 +148,7 @@
 
 /* Contenedor del mini-mapa Leaflet */
 .mini-map-container {
-  height: 220px;
+  height: 160px;
   width: 100%;
   border-radius: 8px;
   border: 1px solid var(--p-surface-300);
