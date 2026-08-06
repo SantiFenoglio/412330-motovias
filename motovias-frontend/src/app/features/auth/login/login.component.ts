@@ -6,10 +6,11 @@ import { Password } from 'primeng/password';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthLayoutComponent } from '../auth-layout/auth-layout.component';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, InputText, Password, Button, Message, RouterLink],
+  imports: [ReactiveFormsModule, InputText, Password, Button, Message, RouterLink, AuthLayoutComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

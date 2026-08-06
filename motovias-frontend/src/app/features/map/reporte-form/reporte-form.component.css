@@ -25,6 +25,12 @@
   min-height: 1.25rem;
 }
 
+.field-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--p-text-color);
+}
+
 .form-error {
   color: var(--p-red-500);
   font-size: 0.8rem;

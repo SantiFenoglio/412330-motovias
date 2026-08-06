@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   NgZone,
   OnInit,
@@ -10,7 +11,10 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subject, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import * as L from 'leaflet';
 import { MessageService, PrimeTemplate } from 'primeng/api';
 import { TableModule } from 'primeng/table';
@@ -21,6 +25,7 @@ import { Button } from 'primeng/button';
 import { Dialog } from 'primeng/dialog';
 import { Toast } from 'primeng/toast';
 import { AdminComercioService } from '../../../core/services/admin-comercio.service';
+import { GeocodingService, NominatimResult } from '../../../core/services/geocoding.service';
 import {
   CATEGORIA_COMERCIO_CONFIG,
   CategoriaComercio,
@@ -61,7 +66,9 @@ interface EstadoFiltroOption {
 export class AdminComerciosComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly zone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly adminComercioService = inject(AdminComercioService);
+  private readonly geocodingService = inject(GeocodingService);
   private readonly messageService = inject(MessageService);
 
   readonly comercios = signal<ComercioVerificado[]>([]);
@@ -107,11 +114,36 @@ export class AdminComerciosComponent implements OnInit {
     longitud: [null as number | null, [Validators.required, Validators.min(-180), Validators.max(180)]],
   });
 
+  readonly geocodingResults = signal<NominatimResult[]>([]);
+  readonly geocodingLoading = signal(false);
+  private readonly searchQuery$ = new Subject<string>();
+
   readonly miniMapRef = viewChild<ElementRef>('miniMapContainer');
   private miniMap: L.Map | undefined;
   private miniMarker: L.Marker | undefined;
 
   constructor() {
+    // Pipeline reactivo: debounce → cancelación con switchMap → geocodificación
+    this.searchQuery$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      switchMap((query) => {
+        if (query.trim().length < 3) {
+          return of([] as NominatimResult[]);
+        }
+        this.zone.run(() => this.geocodingLoading.set(true));
+        return this.geocodingService.search(query).pipe(
+          catchError(() => of([] as NominatimResult[])),
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((results) => {
+      this.zone.run(() => {
+        this.geocodingLoading.set(false);
+        this.geocodingResults.set(results);
+      });
+    });
+
     effect(() => {
       const el = this.miniMapRef()?.nativeElement;
       if (el && !this.miniMap) {
@@ -166,9 +198,38 @@ export class AdminComerciosComponent implements OnInit {
   onDialogHide(): void {
     this.editando.set(null);
     this.form.reset();
+    this.geocodingResults.set([]);
+    this.geocodingLoading.set(false);
     this.zone.runOutsideAngular(() => {
       this.miniMarker?.remove();
       this.miniMarker = undefined;
+    });
+  }
+
+  onDireccionInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    if (!value.trim()) {
+      this.geocodingResults.set([]);
+    }
+    this.searchQuery$.next(value);
+  }
+
+  onResultSelect(result: NominatimResult): void {
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    this.geocodingResults.set([]);
+    this.form.patchValue({
+      direccion: result.display_name,
+      latitud: lat,
+      longitud: lng,
+    });
+
+    this.zone.runOutsideAngular(() => {
+      if (this.miniMap) {
+        const latlng = L.latLng(lat, lng);
+        this.miniMap.setView(latlng, 15);
+        this.colocarMarcador(latlng);
+      }
     });
   }
 

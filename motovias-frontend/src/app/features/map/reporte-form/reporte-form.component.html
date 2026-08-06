@@ -86,20 +86,18 @@
 
     <!-- Categoría -->
     <div class="form-field">
-      <p-floatlabel>
-        <p-select
-          inputId="categoria"
-          formControlName="categoria"
-          [options]="categorias"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Seleccioná una categoría"
-          [class.ng-invalid]="categoriaInvalid"
-          aria-describedby="categoria-error"
-          styleClass="w-full"
-        />
-        <label for="categoria">Categoría <span aria-hidden="true">*</span></label>
-      </p-floatlabel>
+      <label for="categoria" class="field-label">Categoría <span aria-hidden="true">*</span></label>
+      <p-select
+        inputId="categoria"
+        formControlName="categoria"
+        [options]="categorias"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Seleccioná una categoría"
+        [class.ng-invalid]="categoriaInvalid"
+        aria-describedby="categoria-error"
+        styleClass="w-full"
+      />
       <div id="categoria-error" aria-live="polite" class="field-errors">
         @if (categoriaInvalid) {
           <small class="form-error">Seleccioná una categoría.</small>

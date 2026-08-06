@@ -1,0 +1,34 @@
+<div class="auth-wrapper">
+  <div class="auth-visual">
+    <div class="auth-bg" aria-hidden="true">
+      @for (image of backgroundImages; track image; let i = $index) {
+        <img
+          [ngSrc]="'images/auth-bg/' + image"
+          fill
+          [priority]="i === 0"
+          class="auth-bg-slide"
+          [class.auth-bg-slide--active]="i === activeSlide()"
+        />
+      }
+      <div class="auth-bg-overlay"></div>
+    </div>
+
+    <div class="auth-visual-content">
+      <p class="auth-visual-mark">Motovías</p>
+
+      <div class="auth-visual-copy">
+        <h2 class="auth-visual-title">Explorá Argentina<br />sobre dos ruedas</h2>
+        <p class="auth-visual-description">
+          Reportá incidentes viales, descubrí comercios verificados y compartí tus viajes
+          con otros motoviajeros en un mapa colaborativo en tiempo real.
+        </p>
+      </div>
+
+      <p class="auth-visual-footer">© 2026 Motovías. Todos los derechos reservados.</p>
+    </div>
+  </div>
+
+  <div class="auth-panel">
+    <ng-content></ng-content>
+  </div>
+</div>

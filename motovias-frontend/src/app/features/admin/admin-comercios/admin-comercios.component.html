@@ -157,21 +157,57 @@
     </div>
 
     <div class="form-field">
-      <p-floatlabel>
-        <input
-          id="direccion"
-          type="text"
-          pInputText
-          formControlName="direccion"
-          [class.ng-invalid]="direccionInvalid"
-          aria-describedby="direccion-error"
-          autocomplete="off"
-        />
-        <label for="direccion">Dirección <span aria-hidden="true">*</span></label>
-      </p-floatlabel>
+      <div class="address-search-wrapper">
+        <p-floatlabel>
+          <input
+            id="direccion"
+            type="text"
+            pInputText
+            formControlName="direccion"
+            (input)="onDireccionInput($event)"
+            [class.ng-invalid]="direccionInvalid"
+            aria-describedby="direccion-error"
+            [attr.aria-expanded]="geocodingResults().length > 0"
+            aria-autocomplete="list"
+            aria-controls="geocoding-suggestions"
+            aria-haspopup="listbox"
+            autocomplete="off"
+          />
+          <label for="direccion">Dirección <span aria-hidden="true">*</span></label>
+        </p-floatlabel>
+        @if (geocodingLoading()) {
+          <span class="search-spinner" role="status" aria-label="Buscando dirección…">
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+          </span>
+        }
+      </div>
+      @if (geocodingResults().length > 0) {
+        <ul
+          id="geocoding-suggestions"
+          class="geocoding-suggestions"
+          role="listbox"
+          aria-label="Sugerencias de dirección"
+        >
+          @for (result of geocodingResults(); track result.display_name) {
+            <li
+              role="option"
+              aria-selected="false"
+              class="geocoding-suggestion-item"
+              tabindex="0"
+              (click)="onResultSelect(result)"
+              (keydown.enter)="onResultSelect(result)"
+              (keydown.space)="$event.preventDefault(); onResultSelect(result)"
+            >
+              {{ result.display_name }}
+            </li>
+          }
+        </ul>
+      }
       <div id="direccion-error" aria-live="polite" class="field-errors">
         @if (direccionInvalid) {
           <small class="form-error">La dirección es obligatoria.</small>
+        } @else {
+          <small class="field-hint">Empezá a escribir para buscar la dirección en el mapa.</small>
         }
       </div>
     </div>
@@ -190,21 +226,19 @@
     </div>
 
     <div class="form-field">
-      <p-floatlabel>
-        <p-select
-          inputId="categoria"
-          formControlName="categoria"
-          [options]="categoriaOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Seleccioná una categoría"
-          [class.ng-invalid]="categoriaInvalid"
-          aria-describedby="categoria-error"
-          styleClass="w-full"
-          appendTo="body"
-        />
-        <label for="categoria">Categoría <span aria-hidden="true">*</span></label>
-      </p-floatlabel>
+      <label for="categoria" class="field-label">Categoría <span aria-hidden="true">*</span></label>
+      <p-select
+        inputId="categoria"
+        formControlName="categoria"
+        [options]="categoriaOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Seleccioná una categoría"
+        [class.ng-invalid]="categoriaInvalid"
+        aria-describedby="categoria-error"
+        styleClass="w-full"
+        appendTo="body"
+      />
       <div id="categoria-error" aria-live="polite" class="field-errors">
         @if (categoriaInvalid) {
           <small class="form-error">La categoría es obligatoria.</small>

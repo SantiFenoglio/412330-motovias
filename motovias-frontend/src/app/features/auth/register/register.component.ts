@@ -24,6 +24,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { TipoMotocicleta } from '../../../core/services/user.service';
 import { PASSWORD_REGEX } from '../../perfil/perfil.component';
 import { TerminosDialogComponent } from '../../../shared/terminos-dialog/terminos-dialog.component';
+import { AuthLayoutComponent } from '../auth-layout/auth-layout.component';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -45,6 +46,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
     SelectModule,
     Checkbox,
     TerminosDialogComponent,
+    AuthLayoutComponent,
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
