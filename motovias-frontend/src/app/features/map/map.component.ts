@@ -383,8 +383,10 @@ export class MapComponent implements OnDestroy {
     this.map = L.map(this.mapRef().nativeElement, {
       center: ARGENTINA_CENTER,
       zoom: 5,
-      zoomControl: true,
+      zoomControl: false,
     });
+
+    L.control.zoom({ position: 'topright' }).addTo(this.map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
